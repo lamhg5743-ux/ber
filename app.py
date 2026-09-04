@@ -7,151 +7,210 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKern
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-# Cấu hình giao diện Streamlit
+# Cấu hình trang web Streamlit
 st.set_page_config(
-    page_title="Mô phỏng & Dự đoán BER bằng GPR", 
-    page_icon="📡", 
+    page_title="Dự đoán BER bằng GPR",
+    page_icon="📡",
     layout="wide"
 )
 
-# 1. Hàm tính BER lý thuyết
+# 1. Hàm tính BER lý thuyết chuẩn trên kênh AWGN
 def q_func(x):
     return 0.5 * erfc(x / np.sqrt(2.0))
 
 def get_theoretical_ber(ebno_db, mod_name, code_rate):
     ebno_lin = 10.0 ** (ebno_db / 10.0)
-    eff_ebno = ebno_lin * code_rate
+    ebno_eff = ebno_lin * code_rate
     
-    if mod_name in ["BPSK", "QPSK"]:
-        ber = q_func(np.sqrt(2.0 * eff_ebno))
-    elif mod_name == "8-PSK":
-        ber = (2.0 / 3.0) * q_func(np.sqrt(6.0 * eff_ebno) * np.sin(np.pi / 8.0))
-    elif mod_name == "16-QAM":
-        ber = 0.75 * q_func(np.sqrt(0.8 * eff_ebno))
-    elif mod_name == "64-QAM":
-        ber = (7.0 / 12.0) * q_func(np.sqrt((2.0 / 7.0) * eff_ebno))
+    if mod_name == 'BPSK':
+        ber = q_func(np.sqrt(2.0 * ebno_eff))
+    elif mod_name == 'QPSK':
+        ber = q_func(np.sqrt(2.0 * ebno_eff))
+    elif mod_name == '8-PSK':
+        ber = (2.0 / 3.0) * q_func(np.sqrt(6.0 * ebno_eff) * np.sin(np.pi / 8.0))
+    elif mod_name == '16-QAM':
+        ber = 0.75 * q_func(np.sqrt(0.8 * ebno_eff))
+    elif mod_name == '64-QAM':
+        ber = (7.0 / 12.0) * q_func(np.sqrt((2.0 / 7.0) * ebno_eff))
     else:
-        ber = q_func(np.sqrt(2.0 * eff_ebno))
+        ber = q_func(np.sqrt(2.0 * ebno_eff))
+        
     return np.clip(ber, 1e-7, 0.5)
 
-# 2. Huấn luyện mô hình Gaussian Process Regression (GPR)
+# 2. Tạo dữ liệu và huấn luyện mô hình Gaussian Process Regression (GPR)
 @st.cache_resource
 def train_gpr_model():
     np.random.seed(42)
-    mod_mapping = {"BPSK": 1, "QPSK": 2, "8-PSK": 3, "16-QAM": 4, "64-QAM": 6}
-    code_rates = [0.5, 2/3, 0.75, 5/6, 1.0]
-    ebno_range = np.linspace(-2, 14, 21)
-
-    X_list, y_list = [], []
-    for mod_name, bits in mod_mapping.items():
+    mod_mapping = {
+        'BPSK': 1,
+        'QPSK': 2,
+        '8-PSK': 3,
+        '16-QAM': 4,
+        '64-QAM': 6
+    }
+    code_rates = [0.5, 0.67, 0.75, 0.83, 1.0]
+    ebno_range = np.linspace(-2.0, 14.0, 21)
+    
+    X_list = []
+    y_list = []
+    
+    for mod_name, bit_val in mod_mapping.items():
         for cr in code_rates:
             for ebno in ebno_range:
                 ber_theo = get_theoretical_ber(ebno, mod_name, cr)
                 log_ber = np.log10(ber_theo)
-                noisy_log_ber = log_ber + np.random.normal(0, 0.03)
-                X_list.append([ebno, bits, cr])
-                y_list.append(noisy_log_ber)
-
+                # Mô phỏng sai số thực nghiệm qua nhiễu Gauss
+                log_ber_noisy = log_ber + np.random.normal(0.0, 0.03)
+                
+                X_list.append([ebno, bit_val, cr])
+                y_list.append(log_ber_noisy)
+                
     X = np.array(X_list)
     y = np.array(y_list)
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    kernel = C(1.0, (1e-3, 1e3)) * RBF(length_scale=[3.0, 2.0, 0.5], length_scale_bounds=(1e-2, 1e2)) + WhiteKernel(noise_level=1e-3)
+    
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+    
+    kernel = C(1.0, (1e-3, 1e3)) * RBF(length_scale=[2.0, 1.0, 0.5], length_scale_bounds=(1e-2, 1e2)) + WhiteKernel(noise_level=1e-3)
     gpr = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=5, random_state=42)
     gpr.fit(X_train, y_train)
-
+    
     y_pred_test = gpr.predict(X_test)
     mae = mean_absolute_error(y_test, y_pred_test)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred_test))
     r2 = r2_score(y_test, y_pred_test)
+    
+    return gpr, mae, rmse, r2, mod_mapping
 
-    return gpr, mae, rmse, r2
+# Tải mô hình
+gpr_model, mae_score, rmse_score, r2_val, mod_mapping = train_gpr_model()
 
-# Nạp mô hình đã huấn luyện
-gpr_model, mae, rmse, r2 = train_gpr_model()
+# 3. Giao diện người dùng trên thanh Sidebar
+st.sidebar.title("⚙️ Tham số hệ thống")
 
-# 3. Thanh công cụ bên trái (Sidebar)
-st.sidebar.header("⚙️ Thiết lập Tham số")
+mod_selected = st.sidebar.selectbox(
+    "Sơ đồ điều chế:",
+    ['BPSK', 'QPSK', '8-PSK', '16-QAM', '64-QAM'],
+    index=0
+)
 
-mod_options = ["BPSK", "QPSK", "8-PSK", "16-QAM", "64-QAM"]
-mod_selected = st.sidebar.selectbox("Sơ đồ điều chế", mod_options, index=0)
-
-cr_dict = {
-    "1/2": 0.5,
-    "2/3": 2/3,
-    "3/4": 0.75,
-    "5/6": 5/6,
-    "1.0 (Không mã hóa)": 1.0
+code_rate_dict = {
+    '1/2': 0.5,
+    '2/3': 0.67,
+    '3/4': 0.75,
+    '5/6': 0.83,
+    '1 (Không mã hóa)': 1.0
 }
-cr_label = st.sidebar.selectbox("Tốc độ mã kênh (Rc)", list(cr_dict.keys()), index=0)
-cr_selected = cr_dict[cr_label]
+code_rate_label = st.sidebar.selectbox(
+    "Tốc độ mã hóa kênh (Code Rate):",
+    list(code_rate_dict.keys()),
+    index=0
+)
+cr_selected = code_rate_dict[code_rate_label]
 
 ebno_input = st.sidebar.slider(
-    "Tỷ số Eb/N0 (dB)", 
-    min_value=-2.0, 
-    max_value=14.0, 
-    value=4.0, 
+    "Tỷ số Eb/N0 (dB):",
+    min_value=-2.0,
+    max_value=14.0,
+    value=4.0,
     step=0.5
 )
 
-# Mã QR truy cập
+# Mã QR chia sẻ ứng dụng trên Sidebar
 st.sidebar.markdown("---")
 st.sidebar.subheader("📱 Quét mã trải nghiệm")
 app_url = "https://share.streamlit.io"
 qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={app_url}"
-st.sidebar.image(qr_url, caption="Quét bằng camera điện thoại")
+st.sidebar.image(qr_url, caption="Mở trên điện thoại")
 
-mod_bits = {"BPSK": 1, "QPSK": 2, "8-PSK": 3, "16-QAM": 4, "64-QAM": 6}
-bit_val = mod_bits[mod_selected]
+# 4. Giao diện nội dung chính
+st.title("📡 Mô phỏng & Dự đoán Hiệu năng BER bằng GPR")
+st.markdown(
+    "Ứng dụng trí tuệ nhân tạo **Gaussian Process Regression (GPR)** "
+    "để dự đoán tỷ lệ lỗi bit (BER) và ước lượng độ bất định trên kênh truyền vô tuyến AWGN."
+)
 
-# 4. Khu vực nội dung chính
-st.title("📡 Dự đoán Hiệu năng BER trên Kênh AWGN bằng Mô hình GPR")
+# Hiển thị các chỉ số đánh giá tổng thể của mô hình AI
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Hệ số xác định (R²)", f"{r2_val:.4f}")
+col2.metric("Sai số tuyệt đối (MAE)", f"{mae_score:.4f}")
+col3.metric("Sai số bình phương (RMSE)", f"{rmse_score:.4f}")
 
-# Khối hiển thị độ đo đánh giá mô hình
-col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-col_m1.metric("MAE (log10)", f"{mae:.4f}")
-col_m2.metric("RMSE (log10)", f"{rmse:.4f}")
-col_m3.metric("R² Score", f"{r2:.4f}")
-col_m4.metric("Thông lượng hữu ích", f"{bit_val * cr_selected:.2f} bits/kênh")
+mod_bit_val = mod_mapping[mod_selected]
+query_point = np.array([[ebno_input, mod_bit_val, cr_selected]])
+pred_log_ber, pred_std = gpr_model.predict(query_point, return_std=True)
 
-# Dự đoán giá trị tại điểm người dùng chọn
-point_query = np.array([[ebno_input, bit_val, cr_selected]])
-log_ber_pred, pred_std = gpr_model.predict(point_query, return_std=True)
-ber_pred = 10.0 ** log_ber_pred[0]
-ber_theo = get_theoretical_ber(ebno_input, mod_selected, cr_selected)
+pred_ber_val = 10.0 ** pred_log_ber[0]
+theo_ber_val = get_theoretical_ber(ebno_input, mod_selected, cr_selected)
 
-# 5. Vẽ đồ thị hiệu năng BER
-ebno_curve = np.linspace(-2, 14, 100)
-theo_curve = [get_theoretical_ber(e, mod_selected, cr_selected) for e in ebno_curve]
+col4.metric(
+    label=f"BER tại {ebno_input:.1f} dB",
+    value=f"{pred_ber_val:.3e}",
+    delta=f"Lý thuyết: {theo_ber_val:.3e}",
+    delta_color="off"
+)
 
-X_curve = np.array([[e, bit_val, cr_selected] for e in ebno_curve])
-log_pred_curve, std_curve = gpr_model.predict(X_curve, return_std=True)
+st.markdown("---")
 
-pred_curve = 10.0 ** log_pred_curve
-lower_ci = 10.0 ** (log_pred_curve - 1.96 * std_curve)
-upper_ci = 10.0 ** (log_pred_curve + 1.96 * std_curve)
+# 5. Vẽ đồ thị so sánh BER và khoảng tin cậy 95%
+ebno_curve = np.linspace(-2.0, 14.0, 100)
+X_curve = np.array([[e, mod_bit_val, cr_selected] for e in ebno_curve])
 
-fig, ax = plt.subplots(figsize=(10, 5.2))
-ax.plot(ebno_curve, theo_curve, "k--", linewidth=1.5, label="BER Lý thuyết")
-ax.plot(ebno_curve, pred_curve, "b-", linewidth=2.0, label="BER Dự đoán (GPR)")
-ax.fill_between(ebno_curve, lower_ci, upper_ci, color="blue", alpha=0.18, label="Khoảng tin cậy 95% (±1.96σ)")
-ax.plot(ebno_input, ber_pred, "ro", markersize=10, label=f"Điểm chọn ({ebno_input:.1f} dB)")
+y_pred_curve_log, y_std_curve = gpr_model.predict(X_curve, return_std=True)
 
-ax.set_yscale("log")
-ax.set_xlim(-2, 14)
+ber_pred_curve = 10.0 ** y_pred_curve_log
+ber_lower_curve = 10.0 ** (y_pred_curve_log - 1.96 * y_std_curve)
+ber_upper_curve = 10.0 ** (y_pred_curve_log + 1.96 * y_std_curve)
+
+ber_theo_curve = [get_theoretical_ber(e, mod_selected, cr_selected) for e in ebno_curve]
+
+fig, ax = plt.subplots(figsize=(10, 5))
+
+# Đường lý thuyết
+ax.plot(
+    ebno_curve, 
+    ber_theo_curve, 
+    'k--', 
+    label='BER Lý thuyết', 
+    linewidth=1.8
+)
+
+# Đường dự đoán của GPR
+ax.plot(
+    ebno_curve, 
+    ber_pred_curve, 
+    'b-', 
+    label='BER Dự đoán (GPR)', 
+    linewidth=2.2
+)
+
+# Dải tin cậy 95%
+ax.fill_between(
+    ebno_curve, 
+    ber_lower_curve, 
+    ber_upper_curve, 
+    color='blue', 
+    alpha=0.2, 
+    label='Khoảng tin cậy 95% (±1.96σ)'
+)
+
+# Điểm truy vấn hiện tại được chọn
+ax.plot(
+    ebno_input, 
+    pred_ber_val, 
+    'ro', 
+    markersize=10, 
+    label=f'Điểm chọn ({ebno_input:.1f} dB)'
+)
+
+ax.set_yscale('log')
+ax.set_xlim(-2.0, 14.0)
 ax.set_ylim(1e-6, 1.0)
-ax.set_xlabel(r"$E_b/N_0$ (dB)", fontsize=12)
-ax.set_ylabel("Tỷ lệ lỗi bit (BER)", fontsize=12)
-ax.set_title(f"Hiệu năng BER trên kênh AWGN ({mod_selected})", fontsize=14)
+ax.set_xlabel('$E_b/N_0$ (dB)', fontsize=12)
+ax.set_ylabel('Tỷ lệ lỗi bit (BER)', fontsize=12)
+ax.set_title(f'Hiệu năng BER trên kênh AWGN ({mod_selected})', fontsize=14)
 ax.grid(True, which="both", linestyle=":", alpha=0.6)
-ax.legend(loc="upper right", frameon=True)
+ax.legend(loc='upper right', fontsize=11)
 
 st.pyplot(fig)
-
-# Thống kê chi tiết tại điểm đang xét
-st.markdown("---")
-c1, c2, c3 = st.columns(3)
-c1.info(f"**BER Lý thuyết:** {ber_theo:.4e}")
-c2.success(f"**BER Dự đoán (GPR):** {ber_pred:.4e}")
-c3.warning(f"**Sai số tuyệt đối:** {abs(ber_theo - ber_pred):.4e}")
