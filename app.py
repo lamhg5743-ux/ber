@@ -7,10 +7,14 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKern
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-# Cấu hình trang giao diện
-st.set_page_config(page_title="GPR BER Prediction", page_icon="📡", layout="wide")
+# Cấu hình giao diện Streamlit
+st.set_page_config(
+    page_title="Mô phỏng & Dự đoán BER bằng GPR", 
+    page_icon="📡", 
+    layout="wide"
+)
 
-# 1. Hàm tính BER lý thuyết cho các sơ đồ điều chế
+# 1. Hàm tính BER lý thuyết
 def q_func(x):
     return 0.5 * erfc(x / np.sqrt(2.0))
 
@@ -44,7 +48,6 @@ def train_gpr_model():
             for ebno in ebno_range:
                 ber_theo = get_theoretical_ber(ebno, mod_name, cr)
                 log_ber = np.log10(ber_theo)
-                # Giả lập nhiễu đo kiểm thực nghiệm
                 noisy_log_ber = log_ber + np.random.normal(0, 0.03)
                 X_list.append([ebno, bits, cr])
                 y_list.append(noisy_log_ber)
@@ -58,7 +61,6 @@ def train_gpr_model():
     gpr = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=5, random_state=42)
     gpr.fit(X_train, y_train)
 
-    # Đánh giá chỉ số sai số trên tập kiểm thử
     y_pred_test = gpr.predict(X_test)
     mae = mean_absolute_error(y_test, y_pred_test)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred_test))
@@ -66,11 +68,11 @@ def train_gpr_model():
 
     return gpr, mae, rmse, r2
 
-# Nạp mô hình
+# Nạp mô hình đã huấn luyện
 gpr_model, mae, rmse, r2 = train_gpr_model()
 
-# 3. Giao diện điều khiển (Sidebar)
-st.sidebar.header("⚙️ Cấu hình Kênh truyền")
+# 3. Thanh công cụ bên trái (Sidebar)
+st.sidebar.header("⚙️ Thiết lập Tham số")
 
 mod_options = ["BPSK", "QPSK", "8-PSK", "16-QAM", "64-QAM"]
 mod_selected = st.sidebar.selectbox("Sơ đồ điều chế", mod_options, index=0)
@@ -82,33 +84,38 @@ cr_dict = {
     "5/6": 5/6,
     "1.0 (Không mã hóa)": 1.0
 }
-cr_label = st.sidebar.selectbox("Tốc độ mã hóa kênh (Rc)", list(cr_dict.keys()), index=0)
+cr_label = st.sidebar.selectbox("Tốc độ mã kênh (Rc)", list(cr_dict.keys()), index=0)
 cr_selected = cr_dict[cr_label]
 
-ebno_input = st.sidebar.slider("Tỷ số Eb/N0 (dB)", min_value=-2.0, max_value=14.0, value=4.0, step=0.5)
+ebno_input = st.sidebar.slider(
+    "Tỷ số Eb/N0 (dB)", 
+    min_value=-2.0, 
+    max_value=14.0, 
+    value=4.0, 
+    step=0.5
+)
 
-# Tích hợp mã QR truy cập nhanh
+# Mã QR truy cập
 st.sidebar.markdown("---")
 st.sidebar.subheader("📱 Quét mã trải nghiệm")
 app_url = "https://share.streamlit.io"
 qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={app_url}"
-st.sidebar.image(qr_url, caption="Mở trên điện thoại")
+st.sidebar.image(qr_url, caption="Quét bằng camera điện thoại")
 
-# Ánh xạ số bit tương ứng
 mod_bits = {"BPSK": 1, "QPSK": 2, "8-PSK": 3, "16-QAM": 4, "64-QAM": 6}
 bit_val = mod_bits[mod_selected]
 
-# 4. Khu vực hiển thị nội dung chính
-st.title("📡 Dự đoán Hiệu năng BER trên Kênh AWGN bằng GPR")
+# 4. Khu vực nội dung chính
+st.title("📡 Dự đoán Hiệu năng BER trên Kênh AWGN bằng Mô hình GPR")
 
-# Hiển thị độ đo mô hình (Metrics)
+# Khối hiển thị độ đo đánh giá mô hình
 col_m1, col_m2, col_m3, col_m4 = st.columns(4)
 col_m1.metric("MAE (log10)", f"{mae:.4f}")
 col_m2.metric("RMSE (log10)", f"{rmse:.4f}")
 col_m3.metric("R² Score", f"{r2:.4f}")
 col_m4.metric("Thông lượng hữu ích", f"{bit_val * cr_selected:.2f} bits/kênh")
 
-# Dự đoán tại điểm người dùng chọn
+# Dự đoán giá trị tại điểm người dùng chọn
 point_query = np.array([[ebno_input, bit_val, cr_selected]])
 log_ber_pred, pred_std = gpr_model.predict(point_query, return_std=True)
 ber_pred = 10.0 ** log_ber_pred[0]
@@ -125,9 +132,9 @@ pred_curve = 10.0 ** log_pred_curve
 lower_ci = 10.0 ** (log_pred_curve - 1.96 * std_curve)
 upper_ci = 10.0 ** (log_pred_curve + 1.96 * std_curve)
 
-fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(ebno_curve, theo_curve, "k--", label="BER Lý thuyết")
-ax.plot(ebno_curve, pred_curve, "b-", linewidth=2, label="BER Dự đoán (GPR)")
+fig, ax = plt.subplots(figsize=(10, 5.2))
+ax.plot(ebno_curve, theo_curve, "k--", linewidth=1.5, label="BER Lý thuyết")
+ax.plot(ebno_curve, pred_curve, "b-", linewidth=2.0, label="BER Dự đoán (GPR)")
 ax.fill_between(ebno_curve, lower_ci, upper_ci, color="blue", alpha=0.18, label="Khoảng tin cậy 95% (±1.96σ)")
 ax.plot(ebno_input, ber_pred, "ro", markersize=10, label=f"Điểm chọn ({ebno_input:.1f} dB)")
 
