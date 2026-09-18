@@ -210,7 +210,7 @@ with tab2:
     m3.metric("Thông lượng khả dụng", f"{final_tp_val:.2f} bps/Hz")
     
     # Biểu đồ Thông lượng & Bậc thang chuyển vùng MCS
-    ebno_sweep = np.linspace(-2.0, 16.0, 120)
+    ebno_sweep = np.linspace(-2.0, 20.0, 120)
     sweep_tp = []
     sweep_idx = []
     
