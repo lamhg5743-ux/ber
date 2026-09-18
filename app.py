@@ -84,7 +84,7 @@ gpr_model, mae_val, rmse_val, r2_val, mod_mapping = train_gpr_model()
 st.sidebar.title("🎛️ Bảng Điều Khiển")
 ebno_slider = st.sidebar.slider(
     "Tỷ số Eb/N0 của kênh (dB):",
-    min_value=-2.0, max_value=16.0, value=6.0, step=0.5
+    min_value=-2.0, max_value=20.0, value=6.0, step=0.5
 )
 
 st.sidebar.markdown("---")
