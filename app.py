@@ -51,7 +51,7 @@ def train_gpr_model():
     np.random.seed(42)
     mod_mapping = {'BPSK': 1, 'QPSK': 2, '8-PSK': 3, '16-QAM': 4, '64-QAM': 6}
     code_rates = [0.5, 0.67, 0.75, 0.83, 1.0]
-    ebno_range = np.linspace(-2.0, 16.0, 25)
+    ebno_range = np.linspace(-2.0, 20.0, 25)
     
     X_list, y_list = [], []
     for mod_name, bit_val in mod_mapping.items():
