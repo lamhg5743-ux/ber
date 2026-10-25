@@ -144,15 +144,15 @@
 
       </div>
 
-      <!-- ================= 4 HÌNH THỨC TRỰC QUAN HÓA CHUYÊN SÂU MỚI ================= -->
+      <!-- ================= 4 MÔ HÌNH TRỰC QUAN HÓA ================= -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        <!-- MÔ HÌNH 1: BẢN ĐỒ NHIỆT MA TRẬN GIAO THOA (MATRIX HEATMAP) -->
+        <!-- MÔ HÌNH 1: MATRIX HEATMAP -->
         <div class="glass-card p-5 rounded-2xl space-y-3">
           <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
             <div>
               <h3 class="text-sm font-semibold text-white">1. Bản Đồ Nhiệt Ma Trận Giao Thoa |H·W|²</h3>
-              <p class="text-[11px] text-slate-400">Đường chéo = Tín hiệu có ích; Ô ngoài = Nhiễu đa người dùng</p>
+              <p class="text-[11px] text-slate-400">Đường chéo = Tín hiệu ích; Ô ngoài = Nhiễu đa người dùng</p>
             </div>
             <div class="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
               <button onclick="setMatrixMode('ZF')" id="btn-mat-zf" class="px-2.5 py-1 rounded bg-blue-600 text-white font-medium">Zero-Forcing (ZF)</button>
@@ -163,13 +163,13 @@
             <canvas id="matrixCanvas" width="360" height="230" class="max-w-full"></canvas>
             <div class="flex items-center justify-center gap-4 text-[10px] text-slate-400 mt-2">
               <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span> Tín hiệu ích (~1.0)</span>
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block"></span> Nhiễu giao thoa (>0.15)</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block"></span> Nhiễu giao thoa</span>
               <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-slate-800 inline-block"></span> Không có nhiễu (0.0)</span>
             </div>
           </div>
         </div>
 
-        <!-- MÔ HÌNH 2: THANH BẬC TỰ DO & THẺ PHÂN TÍCH SUY BIẾN MA TRẬN -->
+        <!-- MÔ HÌNH 2: THANH BẬC TỰ DO & THẺ PHÂN TÍCH -->
         <div class="glass-card p-5 rounded-2xl space-y-4 flex flex-col justify-between">
           <div>
             <div class="flex justify-between items-center mb-1">
@@ -179,7 +179,6 @@
             <p class="text-[11px] text-slate-400">Khảo sát năng lực triệt nhiễu đa người dùng qua hệ số bậc tự do (M - K)</p>
           </div>
 
-          <!-- Thanh tiến trình bậc tự do -->
           <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
             <div class="flex justify-between text-xs font-semibold">
               <span class="text-slate-300">Bậc tự do khả dụng (DoF = M - K):</span>
@@ -194,26 +193,23 @@
             </div>
           </div>
 
-          <!-- Thẻ Cảnh báo / Phân tích Thông minh -->
           <div id="dof-alert-box" class="p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-xs text-blue-200 space-y-1">
             <div class="font-bold flex items-center gap-1.5 text-blue-400">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
               <span>Trạng Thái Hoạt Động Khả Dụng</span>
             </div>
-            <p id="dof-alert-msg" class="text-[11px] text-slate-300 leading-relaxed">
-              Trạm gốc BS có dồi dào bậc tự do không gian ($M \gg K$). Ma trận kênh truyền đạt độ trực giao cao, Zero-Forcing triệt sạch nhiễu mà không làm suy giảm công suất thu.
-            </p>
+            <p id="dof-alert-msg" class="text-[11px] text-slate-300 leading-relaxed"></p>
           </div>
         </div>
 
-        <!-- MÔ HÌNH 3: BẢN ĐỒ NHIỆT VÙNG PHỦ SÓNG & PHÂN BỐ SINR 2D -->
+        <!-- MÔ HÌNH 3: BẢN ĐỒ NHIỆT VÙNG PHỦ SÓNG (ĐÃ PHẢN HỒI ĐỘNG THEO K VÀ SNR) -->
         <div class="glass-card p-5 rounded-2xl space-y-3">
           <div class="flex justify-between items-center">
             <div>
-              <h3 class="text-sm font-semibold text-white">3. Bản Đồ Nhiệt Vùng Phủ Sóng & Phân Bố SINR 2D</h3>
-              <p class="text-[11px] text-slate-400">Mô phỏng chùm năng lượng định hướng vươn tới tọa độ các UE</p>
+              <h3 class="text-sm font-semibold text-white">3. Bản Đồ Phủ Sóng & Phân Bố Cường Độ SINR</h3>
+              <p class="text-[11px] text-slate-400">Cập nhật động theo vị trí K người dùng và mức công suất SNR</p>
             </div>
-            <span id="coverage-m-label" class="text-[11px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded border border-emerald-500/30">M = 128 Anten</span>
+            <span id="coverage-dynamic-label" class="text-[11px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded border border-emerald-500/30">K = 8 UE | SNR = 10 dB</span>
           </div>
           <div class="flex flex-col items-center justify-center p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
             <canvas id="coverageCanvas" width="380" height="200" class="max-w-full"></canvas>
@@ -225,14 +221,14 @@
           </div>
         </div>
 
-        <!-- MÔ HÌNH 4: BIỂU ĐỒ DAO ĐỘNG KÊNH THEO THỜI GIAN (CHANNEL HARDENING TRACE) -->
+        <!-- MÔ HÌNH 4: CHANNEL HARDENING TRACE (ĐỘC LẬP K/SNR, PHẢN HỒI THEO KÊNH) -->
         <div class="glass-card p-5 rounded-2xl space-y-3">
           <div class="flex justify-between items-center">
             <div>
               <h3 class="text-sm font-semibold text-white">4. Dao Động Kênh Theo Thời Gian (Channel Hardening)</h3>
-              <p class="text-[11px] text-slate-400">So sánh tính ổn định năng lượng kênh chuẩn hóa ||h_k||²/M qua 40 khe thời gian</p>
+              <p class="text-[11px] text-slate-400">Đặc tính vật lý nội tại (chỉ phụ thuộc vào số anten M và mô hình kênh)</p>
             </div>
-            <span class="text-[11px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded border border-rose-500/30">40 Khe Thời Gian</span>
+            <span id="hardening-channel-label" class="text-[11px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded border border-rose-500/30">Kênh Rayleigh</span>
           </div>
           <div class="h-56">
             <canvas id="hardeningTraceCanvas"></canvas>
@@ -274,7 +270,7 @@
     Hệ thống Mô phỏng Thông tin Di động 4G/5G/6G • Đề tài 4 Giữa kỳ: Massive MIMO 5G NR
   </footer>
 
-  <!-- ================= SCRIPT LOGIC MÔ PHỎNG & VẼ CÁC MÔ HÌNH MỚI ================= -->
+  <!-- SCRIPT LOGIC -->
   <script>
     let currentK = 8;
     let currentSNR = 10;
@@ -369,12 +365,12 @@
     function runSimulation() {
       const data = calculateData();
 
-      // Cập nhật 3 Thẻ KPI
+      // Cập nhật thẻ KPI
       document.getElementById('kpi-rate').innerHTML = `${data.zfRate[3]} <span class="text-sm font-normal text-slate-400">bps/Hz</span>`;
       document.getElementById('kpi-sinr').innerHTML = `+${data.sinrZfDb[3]} <span class="text-sm font-normal text-slate-400">dB</span>`;
       document.getElementById('kpi-hardening').innerText = data.hardSim[3];
 
-      // Cập nhật Bảng số liệu
+      // Cập nhật bảng
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = '';
       M_LIST.forEach((M, i) => {
@@ -390,14 +386,14 @@
         `;
       });
 
-      // Cập nhật 4 Mô hình trực quan mới
+      // Cập nhật 4 Mô hình trực quan
       drawMatrixHeatmap();
       updateDoFAnalysis();
-      drawCoverageHeatmap();
+      drawCoverageHeatmap(data.sinrZfDb[3]);
       updateHardeningTraceChart();
     }
 
-    // ================= 1. VẼ MATRIX HEATMAP (|H·W|²) =================
+    // ================= 1. MATRIX HEATMAP =================
     function drawMatrixHeatmap() {
       const canvas = document.getElementById('matrixCanvas');
       if (!canvas) return;
@@ -420,23 +416,21 @@
           let color = '';
 
           if (i === j) {
-            val = 1.0; // Tín hiệu có ích trên đường chéo
-            color = '#10b981'; // Xanh lục đậm
+            val = 1.0;
+            color = '#10b981';
           } else {
             if (currentMatrixMode === 'ZF') {
-              val = 0.0; // ZF triệt sạch nhiễu
-              color = '#0f172a'; // Tối nền
+              val = 0.0;
+              color = '#0f172a';
             } else {
-              // MRT: rò rỉ nhiễu
               val = parseFloat((0.28 / Math.sqrt(K / 4)).toFixed(2));
-              color = '#f43f5e'; // Đỏ/Hồng nhiễu
+              color = '#f43f5e';
             }
           }
 
           ctx.fillStyle = color;
           ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
 
-          // Vẽ số giá trị nếu K <= 8
           if (K <= 8) {
             ctx.fillStyle = val === 0 ? '#475569' : '#ffffff';
             ctx.font = 'bold 9px monospace';
@@ -447,16 +441,15 @@
         }
       }
 
-      // Nhãn trục UE
       ctx.fillStyle = '#94a3b8';
       ctx.font = '9px Inter';
       ctx.textAlign = 'center';
       ctx.fillText(`Ma trận đáp ứng ${K} × ${K} Người Dùng (${currentMatrixMode})`, w / 2, h - 8);
     }
 
-    // ================= 2. CẬP NHẬT BẬC TỰ DO & THẺ PHÂN TÍCH =================
+    // ================= 2. BẬC TỰ DO =================
     function updateDoFAnalysis() {
-      const M = 128; // Xét tại trạm phát tối đa
+      const M = 128;
       const K = currentK;
       const dof = Math.max(M - K, 0);
       const pct = ((dof / M) * 100).toFixed(1);
@@ -469,22 +462,21 @@
       const box = document.getElementById('dof-alert-box');
       const msg = document.getElementById('dof-alert-msg');
 
-      if (K === 16 && M_LIST[0] === 16) {
-        // Cảnh báo nếu xét tại M=16, K=16
-        badge.className = "text-[11px] px-2.5 py-0.5 rounded font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30";
-        badge.innerText = "CẢNH BÁO NGUY HIỂM";
-        box.className = "p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-200 space-y-1";
-        msg.innerHTML = `⚠️ <b>Cạn kiệt bậc tự do không gian khi M = K = 16:</b> Ma trận kênh bị suy biến làm bùng nổ nhiễu tạp âm, kéo tụt dung lượng mạng xuống chỉ còn <b>7.43 bps/Hz</b>. Trạm BS bắt buộc phải tăng $M \\ge 32$ anten để phục vụ ổn định 16 người dùng.`;
+      if (K === 16) {
+        badge.className = "text-[11px] px-2.5 py-0.5 rounded font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30";
+        badge.innerText = "TẢI CAO (K=16)";
+        box.className = "p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 space-y-1";
+        msg.innerHTML = `⚠️ <b>Tải 16 người dùng:</b> Ở trạm 128 anten, DoF còn lại 112 bậc giúp đạt kỷ lục <b>98.42 bps/Hz</b>. Tuy nhiên, nếu ở trạm gốc 16 anten, DoF rớt về 0 khiến mạng suy biến và chỉ đạt <b>7.43 bps/Hz</b>.`;
       } else {
         badge.className = "text-[11px] px-2.5 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
         badge.innerText = "TỐI ƯU HOÀN HÀO";
         box.className = "p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-200 space-y-1";
-        msg.innerHTML = `✅ <b>Bậc tự do dồi dào (${dof} bậc):</b> Tỷ số $M/K = ${M/K}$ rất lớn giúp các vector kênh truyền tiệm cận trạng thái trực giao lý tưởng. Thuật toán Zero-Forcing khử sạch nhiễu giao thoa, đạt tốc độ truyền cực đại <b>${K === 16 ? '98.42' : '57.96'} bps/Hz</b>.`;
+        msg.innerHTML = `✅ <b>Bậc tự do dồi dào (${dof} bậc khả dụng):</b> Tỷ số $M/K = ${M/K}$ lớn giúp các kênh truyền trực giao lý tưởng. Zero-Forcing triệt tiêu hoàn toàn nhiễu giao thoa đa người dùng.`;
       }
     }
 
-    // ================= 3. VẼ VÙNG PHỦ SÓNG & SINR HEATMAP 2D =================
-    function drawCoverageHeatmap() {
+    // ================= 3. BẢN ĐỒ VÙNG PHỦ SÓNG (ĐỘNG THEO K VÀ SNR) =================
+    function drawCoverageHeatmap(currentMaxSinr) {
       const canvas = document.getElementById('coverageCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -492,70 +484,103 @@
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
-      const bsX = 40;
+      // Cập nhật nhãn động
+      document.getElementById('coverage-dynamic-label').innerText = `K = ${currentK} UE | SNR = ${currentSNR} dB`;
+
+      const bsX = 35;
       const bsY = h / 2;
 
-      // Vẽ các vòng dải quạt ô mạng
+      // Vòng dải quạt
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-      for (let r = 50; r <= 300; r += 60) {
+      for (let r = 50; r <= 320; r += 55) {
         ctx.beginPath();
         ctx.arc(bsX, bsY, r, -Math.PI / 3.2, Math.PI / 3.2);
         ctx.stroke();
       }
 
-      // Vẽ các luồng năng lượng búp sóng rực màu hướng tới UE
-      const angles = [-0.45, -0.15, 0.15, 0.45];
+      // Tỷ lệ độ rực của chùm sóng theo mức SNR (-5 dB đến 25 dB)
+      const snrNorm = Math.max(0.15, Math.min(1.0, (currentSNR + 5) / 30));
+      
+      // Tạo danh sách góc động đúng bằng số K người dùng (4, 8, hoặc 16 UE)
+      const angles = [];
+      const span = 0.95; // Phạm vi góc quét
+      for (let i = 0; i < currentK; i++) {
+        const a = -span / 2 + (i / (currentK - 1 || 1)) * span;
+        angles.push(a);
+      }
+
       angles.forEach((ang, idx) => {
-        const dist = 260;
+        const dist = 240 + (idx % 3) * 20;
         const uex = bsX + dist * Math.cos(ang);
         const uey = bsY + dist * Math.sin(ang);
 
-        // Chùm năng lượng SINR cao
-        const grad = ctx.createRadialGradient(bsX, bsY, 15, uex, uey, 80);
-        grad.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
-        grad.addColorStop(0.6, 'rgba(244, 63, 94, 0.25)');
-        grad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+        // Chùm năng lượng SINR thay đổi màu và độ sáng theo SNR
+        const grad = ctx.createRadialGradient(bsX, bsY, 10, uex, uey, 60);
+        if (currentSNR < 5) {
+          // SNR thấp: Chùm sóng mờ xanh/tím
+          grad.addColorStop(0, `rgba(59, 130, 246, ${0.2 * snrNorm})`);
+          grad.addColorStop(0.7, `rgba(99, 102, 241, ${0.1 * snrNorm})`);
+          grad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+        } else {
+          // SNR cao: Chùm sóng rực sáng xanh lá/đỏ
+          grad.addColorStop(0, `rgba(16, 185, 129, ${0.5 * snrNorm})`);
+          grad.addColorStop(0.5, `rgba(244, 63, 94, ${0.4 * snrNorm})`);
+          grad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+        }
 
+        const beamHalfAngle = (0.7 / Math.sqrt(128)) * (16 / currentK);
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.moveTo(bsX, bsY);
-        ctx.arc(bsX, bsY, dist + 20, ang - 0.12, ang + 0.12);
+        ctx.arc(bsX, bsY, dist + 25, ang - beamHalfAngle, ang + beamHalfAngle);
         ctx.closePath();
         ctx.fill();
 
-        // Chấm vị trí UE
+        // Chấm tròn UE
         ctx.fillStyle = '#38bdf8';
         ctx.beginPath();
-        ctx.arc(uex, uey, 4.5, 0, 2 * Math.PI);
+        ctx.arc(uex, uey, currentK === 16 ? 3 : 4.5, 0, 2 * Math.PI);
         ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '9px Inter';
-        ctx.fillText(`UE ${idx + 1}`, uex + 8, uey + 3);
+
+        // Nhãn UE (nếu K <= 8 thì hiện tên, K=16 thì hiện chấm gọn)
+        if (currentK <= 8) {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '9px Inter';
+          ctx.fillText(`U${idx + 1}`, uex + 6, uey + 3);
+        }
       });
 
-      // Trạm gốc BS
+      // Vẽ trạm gốc BS
       ctx.fillStyle = '#3b82f6';
       ctx.fillRect(bsX - 10, bsY - 30, 8, 60);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px Inter';
-      ctx.fillText('BS (128)', bsX - 25, bsY - 36);
+      ctx.font = 'bold 9px Inter';
+      ctx.fillText('BS', bsX - 22, bsY - 34);
     }
 
-    // ================= 4. BIỂU ĐỒ CHANNEL HARDENING TRACE =================
+    // ================= 4. HARDENING TRACE (PHẢN HỒI THEO MÔ HÌNH KÊNH) =================
     function updateHardeningTraceChart() {
+      const channel = document.getElementById('channel-type').value;
+      document.getElementById('hardening-channel-label').innerText = channel === 'Rayleigh' ? 'Kênh Rayleigh' : 'Kênh Rician (LOS K=4)';
+
       const timeSlots = [];
       const m16Data = [];
       const m128Data = [];
       const targetData = [];
 
+      // Kênh Rician có tia trực diện LOS nên biên độ dao động giảm đi đáng kể
+      const varianceFactor = channel === 'Rayleigh' ? 1.0 : 0.45;
+
       for (let t = 1; t <= 40; t++) {
         timeSlots.push(`${t}`);
         targetData.push(1.0);
-        // M=16: Dao động rất mạnh (std ~0.25)
-        const rand16 = 1.0 + (Math.sin(t * 0.9) * 0.28) + (Math.cos(t * 1.7) * 0.15);
+
+        // M=16: Dao động nhấp nhô
+        const rand16 = 1.0 + ((Math.sin(t * 0.9) * 0.26) + (Math.cos(t * 1.7) * 0.14)) * varianceFactor;
         m16Data.push(parseFloat(rand16.toFixed(3)));
-        // M=128: Gần như phẳng hoàn toàn (std ~0.08)
-        const rand128 = 1.0 + (Math.sin(t * 0.6) * 0.07) + (Math.cos(t * 1.3) * 0.04);
+
+        // M=128: Gần như phẳng hoàn toàn tiệm cận 1.0
+        const rand128 = 1.0 + ((Math.sin(t * 0.6) * 0.06) + (Math.cos(t * 1.3) * 0.03)) * varianceFactor;
         m128Data.push(parseFloat(rand128.toFixed(3)));
       }
 
@@ -574,7 +599,7 @@
           labels: timeSlots,
           datasets: [
             {
-              label: 'M = 16 Anten (Fading sâu, biến động lớn)',
+              label: 'M = 16 Anten (Fading sâu, dao động mạnh)',
               borderColor: '#f43f5e',
               backgroundColor: '#f43f5e',
               data: m16Data,
@@ -592,7 +617,7 @@
               borderWidth: 2.5
             },
             {
-              label: 'Kênh chuẩn hóa lý thuyết (1.0)',
+              label: 'Lý thuyết (Chuẩn hóa = 1.0)',
               borderColor: '#64748b',
               borderDash: [4, 4],
               data: targetData,
@@ -639,7 +664,7 @@
       link.click();
     }
 
-    // ================= TAB 2: VẼ BÚP SÓNG 2D CANVAS =================
+    // ================= TAB 2: BEAMFORMING 2D =================
     function drawBeamPattern() {
       const canvas = document.getElementById('beamCanvas');
       if (!canvas) return;
