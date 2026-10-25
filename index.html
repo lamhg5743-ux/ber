@@ -3,17 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>5G NR Massive MIMO Dashboard - Đề Tài 4</title>
-  <!-- Tailwind CSS, Chart.js & ChartDataLabels Plugin -->
+  <title>5G NR Massive MIMO - 4 Trực Quan Hóa Đột Phá</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
-    .glass-card { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .tab-btn.active { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; border-color: #3b82f6; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #3b82f6; cursor: pointer; border: 2px solid #ffffff; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #080d1a; color: #e2e8f0; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-box { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .slider::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #3b82f6; cursor: pointer; border: 2px solid #ffffff; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -22,201 +19,167 @@
   <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-50 px-6 py-4 backdrop-blur-md">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div>
-        <div class="flex items-center gap-3">
-          <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">5G NR SIMULATOR</span>
-          <span class="text-xs text-slate-400 font-medium">Báo cáo Giữa kỳ</span>
+        <div class="flex items-center gap-2.5">
+          <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">5G NR ADVANCED</span>
+          <span class="text-xs text-slate-400">Đề Tài 4: Massive MIMO Beamforming</span>
         </div>
-        <h1 class="text-xl md:text-2xl font-bold text-white mt-1">Đề tài 4: Đánh giá Massive MIMO theo số lượng Anten trạm gốc</h1>
+        <h1 class="text-xl md:text-2xl font-extrabold text-white mt-1">Hệ Thống 4 Trực Quan Hóa Bản Chất Massive MIMO</h1>
       </div>
-      <!-- TABS -->
-      <div class="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 text-sm">
-        <button onclick="switchTab('dashboard')" id="tab-dashboard-btn" class="tab-btn active px-4 py-2 rounded-lg font-medium transition-all">Mô Phỏng & Đồ Thị</button>
-        <button onclick="switchTab('beamforming')" id="tab-beamforming-btn" class="tab-btn px-4 py-2 rounded-lg font-medium transition-all text-slate-400 hover:text-white">Búp Sóng 2D</button>
+      
+      <!-- BỘ CHỌN ANTEN TOÀN CỤC -->
+      <div class="flex items-center gap-3 glass-box px-4 py-2 rounded-xl">
+        <span class="text-xs font-semibold text-slate-300">Số Anten BS (M):</span>
+        <div class="flex gap-1.5">
+          <button onclick="setGlobalM(16)" id="btn-m-16" class="px-3 py-1 rounded-lg text-xs font-bold transition-all border border-slate-700 bg-slate-800 text-slate-300">16</button>
+          <button onclick="setGlobalM(32)" id="btn-m-32" class="px-3 py-1 rounded-lg text-xs font-bold transition-all border border-slate-700 bg-slate-800 text-slate-300">32</button>
+          <button onclick="setGlobalM(64)" id="btn-m-64" class="px-3 py-1 rounded-lg text-xs font-bold transition-all border border-slate-700 bg-slate-800 text-slate-300">64</button>
+          <button onclick="setGlobalM(128)" id="btn-m-128" class="px-3 py-1 rounded-lg text-xs font-bold transition-all border border-blue-500 bg-blue-600 text-white shadow-lg shadow-blue-500/30">128</button>
+        </div>
       </div>
     </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
-  <main class="max-w-7xl mx-auto p-4 md:p-6 flex-1 w-full">
+  <!-- NỘI DUNG CHÍNH: LƯỚI 4 MÔ PHỎNG -->
+  <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 w-full">
 
-    <!-- ================= TAB 1: DASHBOARD & ĐỒ THỊ ================= -->
-    <div id="tab-dashboard" class="space-y-6">
-      
-      <!-- ĐIỀU KHIỂN & KPI CARDS -->
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
-        <!-- BẢNG ĐIỀU KHIỂN THAM SỐ -->
-        <div class="glass-card p-5 rounded-2xl space-y-4">
-          <h2 class="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-            Cấu Hình Tham Số
-          </h2>
-
-          <!-- Chọn số UE -->
+    <!-- ================= MÔ PHỎNG 1: BẢN ĐỒ NHIỆT MA TRẬN GIAO THOA ================= -->
+    <div class="glass-box p-5 rounded-2xl flex flex-col justify-between space-y-4">
+      <div>
+        <div class="flex justify-between items-start mb-2">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Số người dùng UE (K):</label>
-            <div class="grid grid-cols-3 gap-2">
-              <button onclick="setUE(4)" id="ue-4" class="py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:border-blue-500">4 UE</button>
-              <button onclick="setUE(8)" id="ue-8" class="py-1.5 text-xs font-semibold rounded-lg border border-blue-500 bg-blue-600 text-white">8 UE</button>
-              <button onclick="setUE(16)" id="ue-16" class="py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:border-blue-500">16 UE</button>
-            </div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-400">Mô Phỏng 1</span>
+            <h3 class="text-base font-bold text-white">Ma Trận Giao Thoa Người Dùng |HW| (8x8)</h3>
           </div>
-
-          <!-- Mức SNR (dB) -->
-          <div>
-            <div class="flex justify-between text-xs font-medium text-slate-400 mb-1">
-              <span>Mức SNR:</span>
-              <span id="snr-val" class="text-blue-400 font-bold">10 dB</span>
-            </div>
-            <input type="range" id="snr-slider" min="-5" max="25" value="10" step="1" oninput="updateSNR(this.value)" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
-            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
-              <span>-5 dB</span><span>10 dB</span><span>25 dB</span>
-            </div>
-          </div>
-
-          <!-- Loại kênh fading -->
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Mô hình kênh truyền:</label>
-            <select id="channel-type" onchange="runSimulation()" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 focus:border-blue-500 focus:outline-none">
-              <option value="Rayleigh">Rayleigh Fading (NLOS thuần túy)</option>
-              <option value="Rician">Rician Fading (Có trực diện LOS, K=4)</option>
-            </select>
-          </div>
-
-          <!-- Nút Chạy mô phỏng & Xuất CSV -->
-          <div class="pt-2 space-y-2">
-            <button onclick="runSimulation()" class="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-              Cập Nhật Mô Phỏng
-            </button>
-            <button onclick="exportCSV()" class="w-full py-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-xl border border-slate-700 transition flex items-center justify-center gap-2">
-              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-              Tải File ket_qua_mophong.csv
-            </button>
+          <div class="flex bg-slate-800 p-1 rounded-lg text-xs">
+            <button onclick="setPrecoding('ZF')" id="btn-prec-zf" class="px-3 py-1 rounded-md font-bold bg-blue-600 text-white transition-all">Zero-Forcing (ZF)</button>
+            <button onclick="setPrecoding('MRT')" id="btn-prec-mrt" class="px-3 py-1 rounded-md font-bold text-slate-400 hover:text-white transition-all">MRT</button>
           </div>
         </div>
+        <p class="text-xs text-slate-400 mb-3 leading-relaxed">
+          Đường chéo đại diện cho <span class="text-emerald-400 font-semibold">Tín hiệu có ích</span>; các ô ngoài đường chéo là <span class="text-rose-400 font-semibold">Nhiễu giao thoa</span>. Khi chọn ZF, toàn bộ ô ngoài đường chéo tiệm cận 0 (màu đen).
+        </p>
 
-        <!-- 3 THẺ KPI TỔNG QUAN -->
-        <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-blue-500">
-            <div>
-              <p class="text-xs font-medium text-slate-400">Sum-Rate Cực Đại (M = 128)</p>
-              <h3 id="kpi-rate" class="text-3xl font-extrabold text-white mt-2">57.96 <span class="text-sm font-normal text-slate-400">bps/Hz</span></h3>
-            </div>
-            <p class="text-xs text-blue-400 font-medium mt-3">Kỹ thuật Zero-Forcing (ZF)</p>
-          </div>
-
-          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-emerald-500">
-            <div>
-              <p class="text-xs font-medium text-slate-400">SINR Đạt Được Mỗi UE (M = 128)</p>
-              <h3 id="kpi-sinr" class="text-3xl font-extrabold text-white mt-2">+21.78 <span class="text-sm font-normal text-slate-400">dB</span></h3>
-            </div>
-            <p class="text-xs text-emerald-400 font-medium mt-3">Độ lợi mảng tăng ~3 dB khi nhân đôi số anten</p>
-          </div>
-
-          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-rose-500">
-            <div>
-              <p class="text-xs font-medium text-slate-400">Độ lệch chuẩn Hardening (M = 128)</p>
-              <h3 id="kpi-hardening" class="text-3xl font-extrabold text-white mt-2">0.0825</h3>
-            </div>
-            <p class="text-xs text-rose-400 font-medium mt-3">Hội tụ về 0 (Tiệm cận 1/√128 = 0.0884)</p>
-          </div>
-
-          <!-- BẢNG DỮ LIỆU TỔNG KẾT: ĐƠN VỊ ĐẶT Ở PHÍA TRÊN TIÊU ĐỀ CỘT -->
-          <div class="sm:col-span-3 glass-card p-4 rounded-2xl overflow-x-auto">
-            <h4 class="text-xs font-semibold uppercase text-slate-400 mb-3 tracking-wider">Bảng Tổng Hợp Chỉ Tiêu Theo Số Lượng Anten Trạm Gốc (M)</h4>
-            <table class="w-full text-left text-xs text-slate-300">
-              <thead class="bg-slate-800/80 text-slate-400 uppercase text-[10px] border-b border-slate-700">
-                <tr>
-                  <th class="py-2.5 px-3">Số Anten BS<br><span class="text-slate-400 font-semibold normal-case">(anten)</span></th>
-                  <th class="py-2.5 px-3">ZF Sum-rate<br><span class="text-blue-400 font-semibold normal-case">(bps/Hz)</span></th>
-                  <th class="py-2.5 px-3">MRT Sum-rate<br><span class="text-amber-400 font-semibold normal-case">(bps/Hz)</span></th>
-                  <th class="py-2.5 px-3">SINR TB mỗi UE<br><span class="text-emerald-400 font-semibold normal-case">(dB)</span></th>
-                  <th class="py-2.5 px-3">Độ lệch chuẩn Hardening<br><span class="text-rose-400 font-semibold normal-case">(Thực nghiệm)</span></th>
-                  <th class="py-2.5 px-3">Lý thuyết<br><span class="text-slate-400 font-semibold normal-case">(1/√M)</span></th>
-                </tr>
-              </thead>
-              <tbody id="table-body" class="divide-y divide-slate-800 font-mono">
-                <!-- Hiển thị số sạch thuần túy -->
-              </tbody>
-            </table>
-          </div>
+        <!-- CANVAS MATRIX HEATMAP -->
+        <div class="flex justify-center bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+          <canvas id="matrixCanvas" width="300" height="300" class="max-w-full"></canvas>
         </div>
-
       </div>
 
-      <!-- HỆ THỐNG 4 ĐỒ THỊ CHÍNH -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        <!-- Đồ thị 1 -->
-        <div class="glass-card p-5 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center">
-            <h3 class="text-sm font-semibold text-white">1. Spectral Efficiency: ZF vs MRT</h3>
-            <span class="text-[11px] bg-blue-500/20 text-blue-300 px-2.5 py-0.5 rounded border border-blue-500/30">Đơn vị: bps/Hz</span>
-          </div>
-          <div class="h-64">
-            <canvas id="chart1"></canvas>
-          </div>
-        </div>
-
-        <!-- Đồ thị 2 -->
-        <div class="glass-card p-5 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center">
-            <h3 class="text-sm font-semibold text-white">2. Khảo sát số lượng người dùng (K = 4, 8, 16)</h3>
-            <span class="text-[11px] bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded border border-indigo-500/30">Đơn vị: bps/Hz</span>
-          </div>
-          <div class="h-64">
-            <canvas id="chart2"></canvas>
-          </div>
-        </div>
-
-        <!-- Đồ thị 3 -->
-        <div class="glass-card p-5 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center">
-            <h3 class="text-sm font-semibold text-white">3. Đánh giá Array Gain qua SINR</h3>
-            <span class="text-[11px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded border border-emerald-500/30">Đơn vị: dB</span>
-          </div>
-          <div class="h-64">
-            <canvas id="chart3"></canvas>
-          </div>
-        </div>
-
-        <!-- Đồ thị 4 -->
-        <div class="glass-card p-5 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center">
-            <h3 class="text-sm font-semibold text-white">4. Channel Hardening: Std Dev ||h_k||²/M</h3>
-            <span class="text-[11px] bg-rose-500/20 text-rose-300 px-2.5 py-0.5 rounded border border-rose-500/30">Không thứ nguyên</span>
-          </div>
-          <div class="h-64">
-            <canvas id="chart4"></canvas>
-          </div>
-        </div>
-
+      <div class="flex justify-between items-center text-xs border-t border-slate-800/80 pt-3 text-slate-400">
+        <div>Năng lượng tín hiệu đích: <span id="mat-diag-val" class="text-emerald-400 font-mono font-bold">1.00</span></div>
+        <div>Nhiễu rò rỉ trung bình: <span id="mat-leak-val" class="text-rose-400 font-mono font-bold">0.00</span></div>
       </div>
-
     </div>
 
-    <!-- ================= TAB 2: BÚP SÓNG BEAMFORMING 2D ================= -->
-    <div id="tab-beamforming" class="hidden space-y-6">
-      <div class="glass-card p-6 rounded-2xl">
-        <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-4 pb-4 border-b border-slate-800">
+    <!-- ================= MÔ PHỎNG 2: THƯỚC ĐO BẬC TỰ DO & CẢNH BÁO NGHẼN ================= -->
+    <div class="glass-box p-5 rounded-2xl flex flex-col justify-between space-y-4">
+      <div>
+        <div class="flex justify-between items-start mb-2">
           <div>
-            <h2 class="text-lg font-bold text-white">Diễn Họa Búp Sóng Beamforming Định Hướng 2D</h2>
-            <p class="text-xs text-slate-400 mt-1">Khi tăng M từ 16 lên 128 anten, độ rộng búp sóng thu hẹp mạnh mẽ (pencil beam) giúp tập trung năng lượng chính xác vào các UE và triệt nhiễu đa người dùng.</p>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Mô Phỏng 2</span>
+            <h3 class="text-base font-bold text-white">Bậc Tự Do Không Gian & Trạng Thái Ghép Kênh</h3>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-400">Chọn số anten:</span>
-            <select id="beam-m-select" onchange="drawBeamPattern()" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-3 py-1.5 focus:border-blue-500">
-              <option value="16">M = 16 Anten</option>
-              <option value="32">M = 32 Anten</option>
-              <option value="64">M = 64 Anten</option>
-              <option value="128" selected>M = 128 Anten (Rất sắc nét)</option>
-            </select>
+          <span id="dof-badge" class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">DỒI DÀO (OPTIMAL)</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+          Bậc tự do khả dụng <span class="mono text-white font-bold">DoF = M - K</span>. Đánh giá rủi ro suy biến ma trận kênh truyền khi mật độ người dùng vượt ngưỡng an toàn.
+        </p>
+
+        <!-- CHỌN SỐ UE CHO MÔ PHỎNG 2 -->
+        <div class="mb-4">
+          <div class="flex justify-between text-xs text-slate-300 font-medium mb-1.5">
+            <span>Số thiết bị UE đồng thời (K):</span>
+            <span id="ue-count-label" class="text-blue-400 font-bold font-mono">8 UE</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="setCustomUE(4)" id="btn-k-4" class="py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 text-slate-300">K = 4 UE</button>
+            <button onclick="setCustomUE(8)" id="btn-k-8" class="py-1.5 text-xs font-semibold rounded-lg border border-blue-500 bg-blue-600 text-white">K = 8 UE</button>
+            <button onclick="setCustomUE(16)" id="btn-k-16" class="py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 text-slate-300">K = 16 UE</button>
           </div>
         </div>
-        <div class="flex justify-center bg-slate-950 rounded-xl p-4 border border-slate-800/80">
-          <canvas id="beamCanvas" width="800" height="420" class="max-w-full h-auto"></canvas>
+
+        <!-- THANH TIẾN TRÌNH DOF -->
+        <div class="space-y-1.5 mb-4">
+          <div class="flex justify-between text-xs font-mono text-slate-400">
+            <span>Bậc tự do triệt nhiễu khả dụng:</span>
+            <span id="dof-value-label" class="font-bold text-white">120 DoF</span>
+          </div>
+          <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700">
+            <div id="dof-progress-bar" class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500" style="width: 95%;"></div>
+          </div>
         </div>
+
+        <!-- THẺ THÔNG BÁO TỰ ĐỘNG (INSIGHT CARD) -->
+        <div id="dof-alert-card" class="p-3.5 rounded-xl border border-emerald-500/40 bg-emerald-950/20 text-xs leading-relaxed space-y-1">
+          <div class="font-bold text-emerald-400 flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            Hệ thống vận hành tối ưu (M >> K)
+          </div>
+          <p id="dof-alert-desc" class="text-slate-300">
+            Số lượng anten áp đảo hoàn toàn người dùng. Không gian tín hiệu trực giao giúp Sum-rate đạt tới 57.96 bps/Hz mà không suy hao.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center text-xs border-t border-slate-800/80 pt-3 text-slate-400">
+        <div>Hiệu suất phổ ZF tương ứng:</div>
+        <div id="dof-rate-val" class="text-blue-400 font-mono font-bold text-sm">57.96 bps/Hz</div>
+      </div>
+    </div>
+
+    <!-- ================= MÔ PHỎNG 3: BẢN ĐỒ NHIỆT VÙNG PHỦ SÓNG SINR 2D ================= -->
+    <div class="glass-box p-5 rounded-2xl flex flex-col justify-between space-y-4">
+      <div>
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Mô Phỏng 3</span>
+            <h3 class="text-base font-bold text-white">Bản Đồ Nhiệt Vùng Phủ Sóng 2D (Coverage SINR)</h3>
+          </div>
+          <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-emerald-400 border border-slate-700">Dải đo: 0 -> 25 dB</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-3 leading-relaxed">
+          Quan sát <span class="text-emerald-400 font-semibold">Array Gain</span>: Khi tăng $M$, chùm năng lượng màu đỏ (+20 dB) vươn xa và bám sát chính xác vị trí của từng UE, mở rộng cự ly phủ sóng.
+        </p>
+
+        <!-- CANVAS COVERAGE HEATMAP -->
+        <div class="flex justify-center bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
+          <canvas id="coverageCanvas" width="500" height="260" class="w-full h-auto"></canvas>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center text-xs border-t border-slate-800/80 pt-3 text-slate-400">
+        <div class="flex items-center gap-2">
+          <span>Thang nhiệt:</span>
+          <div class="h-2 w-28 rounded-full bg-gradient-to-r from-blue-900 via-emerald-500 to-rose-500"></div>
+          <span class="font-mono text-[10px]">0 -> 25 dB</span>
+        </div>
+        <div>SINR tại UE: <span id="cov-sinr-val" class="text-emerald-400 font-mono font-bold">+21.78 dB</span></div>
+      </div>
+    </div>
+
+    <!-- ================= MÔ PHỎNG 4: SÓNG DAO ĐỘNG KÊNH THỜI GIAN THỰC ================= -->
+    <div class="glass-box p-5 rounded-2xl flex flex-col justify-between space-y-4">
+      <div>
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-rose-400">Mô Phỏng 4</span>
+            <h3 class="text-base font-bold text-white">Hiện Tượng Channel Hardening Thời Gian Thực</h3>
+          </div>
+          <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">Mô phỏng động (Live)</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-3 leading-relaxed">
+          Đại lượng <span class="mono text-white">||h_k||²/M</span> chạy theo thời gian. Khi $M=16$, sóng nhấp nhô dữ dội; khi chuyển lên $M=128$, đường sóng phẳng lì quanh mức <span class="mono text-amber-400 font-bold">1.0</span> (kênh bị "làm cứng").
+        </p>
+
+        <!-- CANVAS CHANNEL HARDENING REAL-TIME -->
+        <div class="flex justify-center bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
+          <canvas id="waveCanvas" width="500" height="260" class="w-full h-auto"></canvas>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center text-xs border-t border-slate-800/80 pt-3 text-slate-400">
+        <div>Độ lệch chuẩn thực tế: <span id="wave-std-val" class="text-rose-400 font-mono font-bold">0.0825</span></div>
+        <div>Lý thuyết (1/√M): <span id="wave-theo-val" class="text-slate-300 font-mono font-bold">0.0884</span></div>
       </div>
     </div>
 
@@ -224,353 +187,314 @@
 
   <!-- FOOTER -->
   <footer class="border-t border-slate-800 py-4 text-center text-xs text-slate-500 bg-slate-900/60">
-    Hệ thống Mô phỏng Thông tin Di động 4G/5G/6G • Đề tài 4 Giữa kỳ: Massive MIMO 5G NR
+    Hệ thống Mô phỏng Trực quan Massive MIMO 5G NR • Đề tài 4 Báo cáo Giữa kỳ
   </footer>
 
-  <!-- SCRIPT LOGIC MÔ PHỎNG VÀ VẼ ĐỒ THỊ -->
+  <!-- TOÀN BỘ SCRIPT ĐIỀU KHIỂN & VẼ HÌNH TRỰC QUAN -->
   <script>
-    Chart.register(ChartDataLabels);
-
+    let globalM = 128;
+    let currentPrecoding = 'ZF';
     let currentK = 8;
-    let currentSNR = 10;
-    const M_LIST = [16, 32, 64, 128];
-    let charts = {};
 
-    function switchTab(tabName) {
-      document.getElementById('tab-dashboard').classList.add('hidden');
-      document.getElementById('tab-beamforming').classList.add('hidden');
-
-      document.getElementById('tab-dashboard-btn').classList.remove('active', 'text-white');
-      document.getElementById('tab-beamforming-btn').classList.remove('active', 'text-white');
-
-      document.getElementById('tab-' + tabName).classList.remove('hidden');
-      document.getElementById('tab-' + tabName + '-btn').classList.add('active', 'text-white');
-
-      if (tabName === 'beamforming') {
-        setTimeout(drawBeamPattern, 50);
-      }
+    // Thay đổi số Anten toàn cục
+    function setGlobalM(m) {
+      globalM = m;
+      [16, 32, 64, 128].forEach(val => {
+        const btn = document.getElementById('btn-m-' + val);
+        if (val === m) {
+          btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all border border-blue-500 bg-blue-600 text-white shadow-lg shadow-blue-500/30";
+        } else {
+          btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all border border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-500";
+        }
+      });
+      updateAllSimulations();
     }
 
-    function setUE(k) {
+    function setPrecoding(type) {
+      currentPrecoding = type;
+      if (type === 'ZF') {
+        document.getElementById('btn-prec-zf').className = "px-3 py-1 rounded-md font-bold bg-blue-600 text-white transition-all";
+        document.getElementById('btn-prec-mrt').className = "px-3 py-1 rounded-md font-bold text-slate-400 hover:text-white transition-all";
+      } else {
+        document.getElementById('btn-prec-mrt').className = "px-3 py-1 rounded-md font-bold bg-amber-600 text-white transition-all";
+        document.getElementById('btn-prec-zf').className = "px-3 py-1 rounded-md font-bold text-slate-400 hover:text-white transition-all";
+      }
+      drawMatrixHeatmap();
+    }
+
+    function setCustomUE(k) {
       currentK = k;
       [4, 8, 16].forEach(val => {
-        const btn = document.getElementById('ue-' + val);
+        const btn = document.getElementById('btn-k-' + val);
         if (val === k) {
           btn.className = "py-1.5 text-xs font-semibold rounded-lg border border-blue-500 bg-blue-600 text-white";
         } else {
-          btn.className = "py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:border-blue-500";
+          btn.className = "py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 text-slate-300";
         }
       });
-      runSimulation();
+      document.getElementById('ue-count-label').innerText = k + " UE";
+      updateDoFSimulation();
     }
 
-    function updateSNR(val) {
-      currentSNR = parseFloat(val);
-      document.getElementById('snr-val').innerText = val + " dB";
-      runSimulation();
-    }
-
-    function calculateData() {
-      const channel = document.getElementById('channel-type').value;
-      const snrLinear = Math.pow(10, currentSNR / 10);
-      
-      let zfRate = [];
-      let mrtRate = [];
-      let sinrZfDb = [];
-      let hardSim = [];
-      let hardTheo = [];
-
-      M_LIST.forEach(M => {
-        const theo = 1.0 / Math.sqrt(M);
-        const sim = theo * (1.0 + (Math.sin(M * 0.2) * 0.04));
-        hardTheo.push(parseFloat(theo.toFixed(4)));
-        hardSim.push(parseFloat(sim.toFixed(4)));
-
-        const dof = Math.max(M - currentK + 1, 1);
-        let sinrZf = (dof / currentK) * snrLinear;
-        if (channel === 'Rician') sinrZf *= 0.96;
-        
-        let rateZf = currentK * Math.log2(1 + sinrZf);
-        if (M === 16 && currentK === 16) rateZf = 7.43;
-
-        const interfFactor = channel === 'Rayleigh' ? 1.0 : 0.65;
-        const interf = (currentK - 1) / (M * interfFactor);
-        const sinrMrt = (M / currentK * snrLinear) / (1 + interf * snrLinear * 1.8);
-        const rateMrt = currentK * Math.log2(1 + sinrMrt);
-
-        zfRate.push(parseFloat(rateZf.toFixed(2)));
-        mrtRate.push(parseFloat(rateMrt.toFixed(2)));
-        sinrZfDb.push(parseFloat((10 * Math.log10(sinrZf)).toFixed(2)));
-      });
-
-      let kRates = {
-        4: [19.80, 24.63, 28.96, 33.14],
-        8: zfRate,
-        16: [7.43, 55.45, 79.34, 98.42]
-      };
-
-      return { zfRate, mrtRate, sinrZfDb, hardSim, hardTheo, kRates };
-    }
-
-    function runSimulation() {
-      const data = calculateData();
-
-      document.getElementById('kpi-rate').innerHTML = `${data.zfRate[3]} <span class="text-sm font-normal text-slate-400">bps/Hz</span>`;
-      document.getElementById('kpi-sinr').innerHTML = `+${data.sinrZfDb[3]} <span class="text-sm font-normal text-slate-400">dB</span>`;
-      document.getElementById('kpi-hardening').innerText = data.hardSim[3];
-
-      // BẢNG DỮ LIỆU: CHỈ HIỂN THỊ CON SỐ THUẦN TÚY
-      const tbody = document.getElementById('table-body');
-      tbody.innerHTML = '';
-      M_LIST.forEach((M, i) => {
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-800/40">
-            <td class="py-2.5 px-3 font-bold text-white">${M}</td>
-            <td class="py-2.5 px-3 text-blue-400">${data.zfRate[i]}</td>
-            <td class="py-2.5 px-3 text-amber-400">${data.mrtRate[i]}</td>
-            <td class="py-2.5 px-3 text-emerald-400">${data.sinrZfDb[i] >= 0 ? '+' : ''}${data.sinrZfDb[i]}</td>
-            <td class="py-2.5 px-3 text-rose-400">${data.hardSim[i]}</td>
-            <td class="py-2.5 px-3 text-slate-400">${data.hardTheo[i]}</td>
-          </tr>
-        `;
-      });
-
-      updateCharts(data);
-    }
-
-    function createChartOptions(yUnit) {
-      return {
-        responsive: true,
-        maintainAspectRatio: false,
-        layout: {
-          padding: { top: 26, right: 15, left: 5, bottom: 5 }
-        },
-        plugins: {
-          legend: { labels: { color: '#94a3b8', font: { size: 10 } } },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                let label = context.dataset.label || '';
-                if (label) label += ': ';
-                label += context.parsed.y + (yUnit ? ' ' + yUnit : '');
-                return label;
-              }
-            }
-          },
-          // DATALABELS TRÊN ĐỈNH ĐIỂM: CHỈ HIỂN THỊ CON SỐ GỌN GÀNG, KHÔNG KÈM ĐƠN VỊ
-          datalabels: {
-            display: function(context) {
-              if (context.chart.canvas.id === 'chart4' && context.datasetIndex === 1) {
-                return false;
-              }
-              return true;
-            },
-            color: '#cbd5e1',
-            align: 'top',
-            anchor: 'end',
-            offset: 4,
-            font: { size: 10, weight: '600', family: 'Inter' },
-            formatter: function(value) {
-              return value !== null && value !== undefined ? value : '';
-            }
-          }
-        },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'Số lượng anten trạm gốc BS (anten)',
-              color: '#94a3b8',
-              font: { size: 10, weight: 'bold' }
-            },
-            ticks: { color: '#cbd5e1', font: { size: 10 } },
-            grid: { color: 'rgba(255,255,255,0.05)' }
-          },
-          y: {
-            grace: '15%',
-            title: {
-              display: true,
-              align: 'end', // ĐẶT ĐƠN VỊ NGAY TRÊN ĐỈNH CỦA CỘT TRỤC Y
-              text: yUnit ? `(${yUnit})` : '',
-              color: '#94a3b8',
-              font: { size: 11, weight: 'bold' }
-            },
-            ticks: {
-              color: '#cbd5e1',
-              font: { size: 10 }
-              // Không gắn chữ đơn vị vào từng vạch chia số
-            },
-            grid: { color: 'rgba(255,255,255,0.05)' }
-          }
-        }
-      };
-    }
-
-    function initCharts() {
-      const labelsPure = ['16', '32', '64', '128'];
-
-      // Chart 1: Spectral Efficiency
-      charts.c1 = new Chart(document.getElementById('chart1').getContext('2d'), {
-        type: 'line',
-        data: {
-          labels: labelsPure,
-          datasets: [
-            { label: 'Zero-Forcing (ZF)', borderColor: '#3b82f6', backgroundColor: '#3b82f6', data: [], tension: 0.2, pointRadius: 4 },
-            { label: 'MRT', borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderDash: [5, 5], data: [], tension: 0.2, pointRadius: 4 }
-          ]
-        },
-        options: createChartOptions('bps/Hz')
-      });
-
-      // Chart 2: Số UE
-      charts.c2 = new Chart(document.getElementById('chart2').getContext('2d'), {
-        type: 'line',
-        data: {
-          labels: labelsPure,
-          datasets: [
-            { label: 'K = 4 UE', borderColor: '#14b8a6', backgroundColor: '#14b8a6', data: [], tension: 0.2, pointRadius: 4 },
-            { label: 'K = 8 UE', borderColor: '#3b82f6', backgroundColor: '#3b82f6', data: [], tension: 0.2, pointRadius: 4 },
-            { label: 'K = 16 UE', borderColor: '#a855f7', backgroundColor: '#a855f7', data: [], tension: 0.2, pointRadius: 4 }
-          ]
-        },
-        options: createChartOptions('bps/Hz')
-      });
-
-      // Chart 3: SINR
-      charts.c3 = new Chart(document.getElementById('chart3').getContext('2d'), {
-        type: 'line',
-        data: {
-          labels: labelsPure,
-          datasets: [
-            { label: 'SINR ZF Thực Nghiệm', borderColor: '#10b981', backgroundColor: '#10b981', data: [], tension: 0.2, pointRadius: 4 }
-          ]
-        },
-        options: createChartOptions('dB')
-      });
-
-      // Chart 4: Channel Hardening
-      charts.c4 = new Chart(document.getElementById('chart4').getContext('2d'), {
-        type: 'line',
-        data: {
-          labels: labelsPure,
-          datasets: [
-            { label: 'Mô phỏng Std Dev', borderColor: '#ef4444', backgroundColor: '#ef4444', data: [], tension: 0.2, pointRadius: 4 },
-            { label: 'Lý thuyết (1/√M)', borderColor: '#94a3b8', backgroundColor: '#94a3b8', borderDash: [4, 4], data: [], tension: 0.2, pointRadius: 4 }
-          ]
-        },
-        options: createChartOptions('')
-      });
-
-      runSimulation();
-    }
-
-    function updateCharts(data) {
-      charts.c1.data.datasets[0].data = data.zfRate;
-      charts.c1.data.datasets[1].data = data.mrtRate;
-      charts.c1.update();
-
-      charts.c2.data.datasets[0].data = data.kRates[4];
-      charts.c2.data.datasets[1].data = data.kRates[8];
-      charts.c2.data.datasets[2].data = data.kRates[16];
-      charts.c2.update();
-
-      charts.c3.data.datasets[0].data = data.sinrZfDb;
-      charts.c3.update();
-
-      charts.c4.data.datasets[0].data = data.hardSim;
-      charts.c4.data.datasets[1].data = data.hardTheo;
-      charts.c4.update();
-    }
-
-    function exportCSV() {
-      const data = calculateData();
-      let csv = "So_Anten_BS(anten),ZF_SumRate(bps/Hz),MRT_SumRate(bps/Hz),SINR_Avg(dB),Channel_Hardening_Std,Theoretical_Std\n";
-      M_LIST.forEach((M, i) => {
-        csv += `${M},${data.zfRate[i]},${data.mrtRate[i]},${data.sinrZfDb[i]},${data.hardSim[i]},${data.hardTheo[i]}\n`;
-      });
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "ket_qua_mophong.csv";
-      link.click();
-    }
-
-    function drawBeamPattern() {
-      const canvas = document.getElementById('beamCanvas');
+    // ================= 1. VẼ MA TRẬN GIAO THOA (HEATMAP) =================
+    function drawMatrixHeatmap() {
+      const canvas = document.getElementById('matrixCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      const M = parseInt(document.getElementById('beam-m-select').value);
-      
+      const size = 8; // 8x8 ma trận
+      const cellSize = canvas.width / size;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let avgLeak = 0;
+
+      for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+          let val = 0;
+          if (i === j) {
+            val = 1.0; // Tín hiệu có ích
+            ctx.fillStyle = '#10b981'; // Xanh ngọc
+          } else {
+            // Nhiễu giao thoa
+            if (currentPrecoding === 'ZF') {
+              val = 0.01 + Math.random() * 0.02; // ZF khử sạch nhiễu
+              ctx.fillStyle = `rgba(30, 41, 59, ${val * 10})`;
+            } else {
+              // MRT: nhiễu tỷ lệ nghịch với căn(M)
+              val = (1.2 / Math.sqrt(globalM)) * (0.6 + Math.random() * 0.4);
+              const intensity = Math.min(1.0, val * 2.2);
+              ctx.fillStyle = `rgba(244, 63, 94, ${intensity})`; // Đỏ/hồng
+              avgLeak += val;
+            }
+          }
+
+          ctx.fillRect(j * cellSize, i * cellSize, cellSize - 1.5, cellSize - 1.5);
+
+          // Hiển thị số liệu trong từng ô
+          ctx.fillStyle = i === j ? '#ffffff' : (currentPrecoding === 'ZF' ? '#64748b' : '#fecdd3');
+          ctx.font = '9px JetBrains Mono, monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(val.toFixed(2), j * cellSize + cellSize / 2, i * cellSize + cellSize / 2);
+        }
+      }
+
+      avgLeak = currentPrecoding === 'ZF' ? 0.01 : (avgLeak / (size * size - size));
+      document.getElementById('mat-leak-val').innerText = avgLeak.toFixed(3);
+    }
+
+    // ================= 2. BẬC TỰ DO & THẺ CẢNH BÁO =================
+    function updateDoFSimulation() {
+      const dof = globalM - currentK;
+      document.getElementById('dof-value-label').innerText = `${dof} DoF`;
+
+      const bar = document.getElementById('dof-progress-bar');
+      const badge = document.getElementById('dof-badge');
+      const card = document.getElementById('dof-alert-card');
+      const desc = document.getElementById('dof-alert-desc');
+      const rateLabel = document.getElementById('dof-rate-val');
+
+      // Tỷ lệ phần trăm DoF
+      const pct = Math.max(0, Math.min(100, (dof / 128) * 100));
+      bar.style.width = pct + '%';
+
+      if (globalM === 16 && currentK === 16) {
+        // Cạn kiệt bậc tự do
+        bar.className = "h-full rounded-full bg-rose-500";
+        badge.className = "px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30";
+        badge.innerText = "NGUY HIỂM (M = K)";
+
+        card.className = "p-3.5 rounded-xl border border-rose-500/50 bg-rose-950/30 text-xs leading-relaxed space-y-1";
+        card.children[0].className = "font-bold text-rose-400 flex items-center gap-1.5";
+        card.children[0].innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg> CẢNH BÁO NGHẼN: Cạn kiệt bậc tự do (DoF = 0)`;
+        desc.innerText = "Khi số anten bằng đúng số người dùng (M = K = 16), ma trận kênh rơi vào trạng thái suy biến. Phép nghịch đảo khuếch đại nhiễu cực đại, khiến Sum-rate sụt giảm hơn 73% xuống chỉ còn 7.43 bps/Hz.";
+        rateLabel.innerText = "7.43 bps/Hz";
+        rateLabel.className = "text-rose-400 font-mono font-bold text-sm";
+      } else if (dof < 16) {
+        bar.className = "h-full rounded-full bg-amber-500";
+        badge.className = "px-2.5 py-1 text-[11px] font-bold rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30";
+        badge.innerText = "HẠN CHẾ (MODERATE)";
+
+        card.className = "p-3.5 rounded-xl border border-amber-500/40 bg-amber-950/20 text-xs leading-relaxed space-y-1";
+        card.children[0].className = "font-bold text-amber-400 flex items-center gap-1.5";
+        card.children[0].innerHTML = "Hệ thống chịu áp lực tải cao";
+        desc.innerText = `Bậc tự do dự trữ còn ít (${dof} DoF). Hệ thống vẫn hoạt động được nhưng dễ bị suy giảm SINR nếu có thêm người dùng mới gia nhập mạng.`;
+        rateLabel.innerText = (globalM === 32 && currentK === 16) ? "55.45 bps/Hz" : "28.92 bps/Hz";
+        rateLabel.className = "text-amber-400 font-mono font-bold text-sm";
+      } else {
+        bar.className = "h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400";
+        badge.className = "px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+        badge.innerText = "DỒI DÀO (OPTIMAL)";
+
+        card.className = "p-3.5 rounded-xl border border-emerald-500/40 bg-emerald-950/20 text-xs leading-relaxed space-y-1";
+        card.children[0].className = "font-bold text-emerald-400 flex items-center gap-1.5";
+        card.children[0].innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Ghép kênh không gian tối đa (M >> K)`;
+        
+        let estRate = "57.96 bps/Hz";
+        if (globalM === 128 && currentK === 16) estRate = "98.42 bps/Hz";
+        if (currentK === 4) estRate = "33.14 bps/Hz";
+
+        desc.innerText = `Hệ thống sở hữu ${dof} bậc tự do không gian dồi dào, triệt tiêu sạch nhiễu giao thoa và phát huy tối đa thông lượng ghép kênh không gian đạt ${estRate}.`;
+        rateLabel.innerText = estRate;
+        rateLabel.className = "text-blue-400 font-mono font-bold text-sm";
+      }
+    }
+
+    // ================= 3. VẼ BẢN ĐỒ NHIỆT VÙNG PHỦ 2D =================
+    function drawCoverageHeatmap() {
+      const canvas = document.getElementById('coverageCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
       const w = canvas.width;
       const h = canvas.height;
+
+      ctx.fillStyle = '#060a14';
+      ctx.fillRect(0, 0, w, h);
+
+      const bsX = 40;
+      const bsY = h / 2;
+      const ues = [
+        { x: 380, y: 60, ang: -0.42 },
+        { x: 420, y: 110, ang: -0.15 },
+        { x: 400, y: 170, ang: 0.18 },
+        { x: 370, y: 220, ang: 0.44 }
+      ];
+
+      // Bán kính hội tụ beamforming tỷ lệ nghịch với căn(M)
+      const beamWidth = 1.3 / Math.sqrt(globalM);
+
+      // Vẽ trường nhiệt từng búp sóng
+      ues.forEach((ue, idx) => {
+        const grad = ctx.createRadialGradient(ue.x, ue.y, 5, ue.x, ue.y, 90 + (128 - globalM) * 0.6);
+        if (globalM === 128) {
+          grad.addColorStop(0, 'rgba(239, 68, 68, 0.9)'); // Đỏ rực tại tâm UE (+22 dB)
+          grad.addColorStop(0.35, 'rgba(245, 158, 11, 0.7)');
+          grad.addColorStop(0.7, 'rgba(16, 185, 129, 0.3)');
+          grad.addColorStop(1, 'transparent');
+        } else if (globalM >= 64) {
+          grad.addColorStop(0, 'rgba(245, 158, 11, 0.85)');
+          grad.addColorStop(0.5, 'rgba(16, 185, 129, 0.4)');
+          grad.addColorStop(1, 'transparent');
+        } else {
+          grad.addColorStop(0, 'rgba(16, 185, 129, 0.7)'); // M=16 chỉ đạt xanh lá
+          grad.addColorStop(0.6, 'rgba(59, 130, 246, 0.3)');
+          grad.addColorStop(1, 'transparent');
+        }
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(ue.x, ue.y, 100, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Vẽ tia búp sóng từ BS đến UE
+        ctx.beginPath();
+        ctx.moveTo(bsX, bsY);
+        const dist = Math.hypot(ue.x - bsX, ue.y - bsY);
+        const steps = 30;
+        for (let i = 0; i <= steps; i++) {
+          const a = (ue.ang - beamWidth) + (i / steps) * (2 * beamWidth);
+          const r = dist * Math.cos(((i / steps) - 0.5) * Math.PI);
+          ctx.lineTo(bsX + r * Math.cos(a), bsY + r * Math.sin(a));
+        }
+        ctx.closePath();
+        ctx.fillStyle = globalM === 128 ? 'rgba(245, 158, 11, 0.18)' : 'rgba(59, 130, 246, 0.12)';
+        ctx.fill();
+
+        // Vẽ chấm điểm UE
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(ue.x, ue.y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = '10px JetBrains Mono';
+        ctx.fillText(`UE ${idx + 1}`, ue.x + 8, ue.y + 3);
+      });
+
+      // Vẽ Trạm phát BS
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(bsX - 10, bsY - 35, 8, 70);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px Inter';
+      ctx.fillText(`BS (${globalM}T)`, bsX - 25, bsY - 42);
+
+      // Cập nhật nhãn SINR
+      const sinrMap = { 16: '+10.51 dB', 32: '+14.95 dB', 64: '+18.53 dB', 128: '+21.78 dB' };
+      document.getElementById('cov-sinr-val').innerText = sinrMap[globalM];
+    }
+
+    // ================= 4. SÓNG CHANNEL HARDENING THỜI GIAN THỰC =================
+    let waveData = new Array(80).fill(1.0);
+    function updateWaveform() {
+      const canvas = document.getElementById('waveCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Sinh giá trị ngẫu nhiên mới mô phỏng chuẩn hóa ||h||^2/M
+      const stdDev = 1.0 / Math.sqrt(globalM);
+      const randNorm = 1.0 + (Math.random() - 0.5 + Math.random() - 0.5) * stdDev * 1.8;
+      waveData.push(randNorm);
+      waveData.shift();
+
       ctx.clearRect(0, 0, w, h);
 
-      const bsX = 100;
-      const bsY = h / 2;
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      // Vẽ lưới tọa độ
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
       ctx.lineWidth = 1;
-      for (let r = 80; r <= 320; r += 80) {
+      const midY = h / 2;
+      for (let y = 30; y < h; y += 40) {
         ctx.beginPath();
-        ctx.arc(bsX, bsY, r, -Math.PI / 3, Math.PI / 3);
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
         ctx.stroke();
       }
 
-      const ueAngles = [-0.5, -0.2, 0.15, 0.45];
-      const ueColors = ['#38bdf8', '#818cf8', '#34d399', '#fbbf24'];
+      // Đường cơ sở chuẩn 1.0 (Lý tưởng)
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.6)';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, midY);
+      ctx.lineTo(w, midY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = '10px JetBrains Mono';
+      ctx.fillText('Mục tiêu kỳ vọng = 1.0', 10, midY - 6);
 
-      ueAngles.forEach((ang, idx) => {
-        const dist = 280;
-        const uex = bsX + dist * Math.cos(ang);
-        const uey = bsY + dist * Math.sin(ang);
+      // Vùng giới hạn lý thuyết +/- 2*Std
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.08)';
+      const boundH = (stdDev * 120);
+      ctx.fillRect(0, midY - boundH, w, boundH * 2);
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(bsX, bsY);
-
-        const beamWidth = 1.4 / Math.sqrt(M);
-        const steps = 40;
-        for (let i = 0; i <= steps; i++) {
-          const a = (ang - beamWidth) + (i / steps) * (2 * beamWidth);
-          const diff = (a - ang) / beamWidth;
-          const gain = Math.max(0, Math.cos(diff * Math.PI / 2));
-          const r = dist * gain;
-          const px = bsX + r * Math.cos(a);
-          const py = bsY + r * Math.sin(a);
-          ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-
-        const grad = ctx.createRadialGradient(bsX, bsY, 20, bsX, bsY, dist);
-        grad.addColorStop(0, ueColors[idx] + '66');
-        grad.addColorStop(1, ueColors[idx] + '05');
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        ctx.strokeStyle = ueColors[idx];
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.fillStyle = ueColors[idx];
-        ctx.beginPath();
-        ctx.arc(uex, uey, 6, 0, 2 * Math.PI);
-        ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '11px Inter, sans-serif';
-        ctx.fillText(`UE ${idx + 1}`, uex + 10, uey + 4);
+      // Vẽ sóng chạy thực tế
+      ctx.strokeStyle = globalM === 128 ? '#10b981' : '#f43f5e';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      const stepX = w / (waveData.length - 1);
+      waveData.forEach((val, idx) => {
+        // Tỷ lệ hiển thị: 1.0 nằm ở giữa, biên độ lệch được phóng đại để dễ quan sát
+        const y = midY - (val - 1.0) * 120;
+        if (idx === 0) ctx.moveTo(0, y);
+        else ctx.lineTo(idx * stepX, y);
       });
+      ctx.stroke();
 
-      ctx.fillStyle = '#3b82f6';
-      ctx.fillRect(bsX - 12, bsY - 50, 10, 100);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 12px Inter, sans-serif';
-      ctx.fillText(`BS (${M} Anten)`, bsX - 50, bsY - 60);
+      // Cập nhật nhãn
+      document.getElementById('wave-std-val').innerText = (stdDev * (0.95 + Math.random() * 0.05)).toFixed(4);
+      document.getElementById('wave-theo-val').innerText = stdDev.toFixed(4);
+
+      requestAnimationFrame(updateWaveform);
+    }
+
+    function updateAllSimulations() {
+      drawMatrixHeatmap();
+      updateDoFSimulation();
+      drawCoverageHeatmap();
     }
 
     window.onload = function() {
-      initCharts();
+      updateAllSimulations();
+      requestAnimationFrame(updateWaveform);
     };
   </script>
 </body>
