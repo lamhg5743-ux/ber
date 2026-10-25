@@ -100,7 +100,7 @@
         <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-blue-500">
             <div>
-              <p class="text-xs font-medium text-slate-400">Sum-Rate Cực Đại (M = 128 anten)</p>
+              <p class="text-xs font-medium text-slate-400">Sum-Rate Cực Đại (M = 128)</p>
               <h3 id="kpi-rate" class="text-3xl font-extrabold text-white mt-2">57.96 <span class="text-sm font-normal text-slate-400">bps/Hz</span></h3>
             </div>
             <p class="text-xs text-blue-400 font-medium mt-3">Kỹ thuật Zero-Forcing (ZF)</p>
@@ -108,7 +108,7 @@
 
           <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-emerald-500">
             <div>
-              <p class="text-xs font-medium text-slate-400">SINR Đạt Được Mỗi UE (M = 128 anten)</p>
+              <p class="text-xs font-medium text-slate-400">SINR Đạt Được Mỗi UE (M = 128)</p>
               <h3 id="kpi-sinr" class="text-3xl font-extrabold text-white mt-2">+21.78 <span class="text-sm font-normal text-slate-400">dB</span></h3>
             </div>
             <p class="text-xs text-emerald-400 font-medium mt-3">Độ lợi mảng tăng ~3 dB khi nhân đôi số anten</p>
@@ -116,28 +116,28 @@
 
           <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-rose-500">
             <div>
-              <p class="text-xs font-medium text-slate-400">Độ lệch chuẩn Hardening (M = 128 anten)</p>
+              <p class="text-xs font-medium text-slate-400">Độ lệch chuẩn Hardening (M = 128)</p>
               <h3 id="kpi-hardening" class="text-3xl font-extrabold text-white mt-2">0.0825</h3>
             </div>
             <p class="text-xs text-rose-400 font-medium mt-3">Hội tụ về 0 (Tiệm cận 1/√128 = 0.0884)</p>
           </div>
 
-          <!-- BẢNG DỮ LIỆU TỔNG KẾT THEO SỐ ANTEN -->
+          <!-- BẢNG DỮ LIỆU TỔNG KẾT: ĐƠN VỊ ĐẶT Ở PHÍA TRÊN TIÊU ĐỀ CỘT -->
           <div class="sm:col-span-3 glass-card p-4 rounded-2xl overflow-x-auto">
             <h4 class="text-xs font-semibold uppercase text-slate-400 mb-3 tracking-wider">Bảng Tổng Hợp Chỉ Tiêu Theo Số Lượng Anten Trạm Gốc (M)</h4>
             <table class="w-full text-left text-xs text-slate-300">
               <thead class="bg-slate-800/80 text-slate-400 uppercase text-[10px] border-b border-slate-700">
                 <tr>
-                  <th class="py-2.5 px-3">Số Anten BS (anten)</th>
-                  <th class="py-2.5 px-3">ZF Sum-rate (bps/Hz)</th>
-                  <th class="py-2.5 px-3">MRT Sum-rate (bps/Hz)</th>
-                  <th class="py-2.5 px-3">SINR TB mỗi UE (dB)</th>
-                  <th class="py-2.5 px-3">Độ lệch chuẩn Hardening</th>
-                  <th class="py-2.5 px-3">Lý thuyết (1/√M)</th>
+                  <th class="py-2.5 px-3">Số Anten BS<br><span class="text-slate-400 font-semibold normal-case">(anten)</span></th>
+                  <th class="py-2.5 px-3">ZF Sum-rate<br><span class="text-blue-400 font-semibold normal-case">(bps/Hz)</span></th>
+                  <th class="py-2.5 px-3">MRT Sum-rate<br><span class="text-amber-400 font-semibold normal-case">(bps/Hz)</span></th>
+                  <th class="py-2.5 px-3">SINR TB mỗi UE<br><span class="text-emerald-400 font-semibold normal-case">(dB)</span></th>
+                  <th class="py-2.5 px-3">Độ lệch chuẩn Hardening<br><span class="text-rose-400 font-semibold normal-case">(Thực nghiệm)</span></th>
+                  <th class="py-2.5 px-3">Lý thuyết<br><span class="text-slate-400 font-semibold normal-case">(1/√M)</span></th>
                 </tr>
               </thead>
               <tbody id="table-body" class="divide-y divide-slate-800 font-mono">
-                <!-- Dữ liệu được tính toán tự động -->
+                <!-- Hiển thị số sạch thuần túy -->
               </tbody>
             </table>
           </div>
@@ -319,15 +319,16 @@
       document.getElementById('kpi-sinr').innerHTML = `+${data.sinrZfDb[3]} <span class="text-sm font-normal text-slate-400">dB</span>`;
       document.getElementById('kpi-hardening').innerText = data.hardSim[3];
 
+      // BẢNG DỮ LIỆU: CHỈ HIỂN THỊ CON SỐ THUẦN TÚY
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = '';
       M_LIST.forEach((M, i) => {
         tbody.innerHTML += `
           <tr class="hover:bg-slate-800/40">
-            <td class="py-2.5 px-3 font-bold text-white">${M} anten</td>
-            <td class="py-2.5 px-3 text-blue-400">${data.zfRate[i]} bps/Hz</td>
-            <td class="py-2.5 px-3 text-amber-400">${data.mrtRate[i]} bps/Hz</td>
-            <td class="py-2.5 px-3 text-emerald-400">${data.sinrZfDb[i] >= 0 ? '+' : ''}${data.sinrZfDb[i]} dB</td>
+            <td class="py-2.5 px-3 font-bold text-white">${M}</td>
+            <td class="py-2.5 px-3 text-blue-400">${data.zfRate[i]}</td>
+            <td class="py-2.5 px-3 text-amber-400">${data.mrtRate[i]}</td>
+            <td class="py-2.5 px-3 text-emerald-400">${data.sinrZfDb[i] >= 0 ? '+' : ''}${data.sinrZfDb[i]}</td>
             <td class="py-2.5 px-3 text-rose-400">${data.hardSim[i]}</td>
             <td class="py-2.5 px-3 text-slate-400">${data.hardTheo[i]}</td>
           </tr>
@@ -337,12 +338,12 @@
       updateCharts(data);
     }
 
-    function createChartOptions(yUnit, yTitle) {
+    function createChartOptions(yUnit) {
       return {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: 22, right: 15, left: 5, bottom: 5 }
+          padding: { top: 26, right: 15, left: 5, bottom: 5 }
         },
         plugins: {
           legend: { labels: { color: '#94a3b8', font: { size: 10 } } },
@@ -356,9 +357,9 @@
               }
             }
           },
+          // DATALABELS TRÊN ĐỈNH ĐIỂM: CHỈ HIỂN THỊ CON SỐ GỌN GÀNG, KHÔNG KÈM ĐƠN VỊ
           datalabels: {
             display: function(context) {
-              // Ẩn nhãn đường lý thuyết chart 4 để không bị đè chữ lên đường mô phỏng
               if (context.chart.canvas.id === 'chart4' && context.datasetIndex === 1) {
                 return false;
               }
@@ -367,11 +368,10 @@
             color: '#cbd5e1',
             align: 'top',
             anchor: 'end',
-            offset: 3,
-            font: { size: 9, weight: '600', family: 'Inter' },
+            offset: 4,
+            font: { size: 10, weight: '600', family: 'Inter' },
             formatter: function(value) {
-              if (value === null || value === undefined) return '';
-              return yUnit ? `${value} ${yUnit}` : `${value}`;
+              return value !== null && value !== undefined ? value : '';
             }
           }
         },
@@ -390,16 +390,15 @@
             grace: '15%',
             title: {
               display: true,
-              text: yTitle,
+              align: 'end', // ĐẶT ĐƠN VỊ NGAY TRÊN ĐỈNH CỦA CỘT TRỤC Y
+              text: yUnit ? `(${yUnit})` : '',
               color: '#94a3b8',
-              font: { size: 10, weight: 'bold' }
+              font: { size: 11, weight: 'bold' }
             },
             ticks: {
               color: '#cbd5e1',
-              font: { size: 10 },
-              callback: function(val) {
-                return val + (yUnit ? ' ' + yUnit : '');
-              }
+              font: { size: 10 }
+              // Không gắn chữ đơn vị vào từng vạch chia số
             },
             grid: { color: 'rgba(255,255,255,0.05)' }
           }
@@ -408,58 +407,58 @@
     }
 
     function initCharts() {
-      const labelsWithUnit = ['16 anten', '32 anten', '64 anten', '128 anten'];
+      const labelsPure = ['16', '32', '64', '128'];
 
       // Chart 1: Spectral Efficiency
       charts.c1 = new Chart(document.getElementById('chart1').getContext('2d'), {
         type: 'line',
         data: {
-          labels: labelsWithUnit,
+          labels: labelsPure,
           datasets: [
             { label: 'Zero-Forcing (ZF)', borderColor: '#3b82f6', backgroundColor: '#3b82f6', data: [], tension: 0.2, pointRadius: 4 },
             { label: 'MRT', borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderDash: [5, 5], data: [], tension: 0.2, pointRadius: 4 }
           ]
         },
-        options: createChartOptions('bps/Hz', 'Spectral Efficiency (bps/Hz)')
+        options: createChartOptions('bps/Hz')
       });
 
       // Chart 2: Số UE
       charts.c2 = new Chart(document.getElementById('chart2').getContext('2d'), {
         type: 'line',
         data: {
-          labels: labelsWithUnit,
+          labels: labelsPure,
           datasets: [
             { label: 'K = 4 UE', borderColor: '#14b8a6', backgroundColor: '#14b8a6', data: [], tension: 0.2, pointRadius: 4 },
             { label: 'K = 8 UE', borderColor: '#3b82f6', backgroundColor: '#3b82f6', data: [], tension: 0.2, pointRadius: 4 },
             { label: 'K = 16 UE', borderColor: '#a855f7', backgroundColor: '#a855f7', data: [], tension: 0.2, pointRadius: 4 }
           ]
         },
-        options: createChartOptions('bps/Hz', 'Dung lượng tổng Sum-rate (bps/Hz)')
+        options: createChartOptions('bps/Hz')
       });
 
       // Chart 3: SINR
       charts.c3 = new Chart(document.getElementById('chart3').getContext('2d'), {
         type: 'line',
         data: {
-          labels: labelsWithUnit,
+          labels: labelsPure,
           datasets: [
             { label: 'SINR ZF Thực Nghiệm', borderColor: '#10b981', backgroundColor: '#10b981', data: [], tension: 0.2, pointRadius: 4 }
           ]
         },
-        options: createChartOptions('dB', 'SINR trung bình mỗi UE (dB)')
+        options: createChartOptions('dB')
       });
 
       // Chart 4: Channel Hardening
       charts.c4 = new Chart(document.getElementById('chart4').getContext('2d'), {
         type: 'line',
         data: {
-          labels: labelsWithUnit,
+          labels: labelsPure,
           datasets: [
             { label: 'Mô phỏng Std Dev', borderColor: '#ef4444', backgroundColor: '#ef4444', data: [], tension: 0.2, pointRadius: 4 },
             { label: 'Lý thuyết (1/√M)', borderColor: '#94a3b8', backgroundColor: '#94a3b8', borderDash: [4, 4], data: [], tension: 0.2, pointRadius: 4 }
           ]
         },
-        options: createChartOptions('', 'Độ lệch chuẩn chuẩn hóa')
+        options: createChartOptions('')
       });
 
       runSimulation();
@@ -485,9 +484,9 @@
 
     function exportCSV() {
       const data = calculateData();
-      let csv = "So_Anten_BS,ZF_SumRate_bps_Hz,MRT_SumRate_bps_Hz,SINR_Avg_dB,Channel_Hardening_Std,Theoretical_Std\n";
+      let csv = "So_Anten_BS(anten),ZF_SumRate(bps/Hz),MRT_SumRate(bps/Hz),SINR_Avg(dB),Channel_Hardening_Std,Theoretical_Std\n";
       M_LIST.forEach((M, i) => {
-        csv += `${M} anten,${data.zfRate[i]} bps/Hz,${data.mrtRate[i]} bps/Hz,${data.sinrZfDb[i]} dB,${data.hardSim[i]},${data.hardTheo[i]}\n`;
+        csv += `${M},${data.zfRate[i]},${data.mrtRate[i]},${data.sinrZfDb[i]},${data.hardSim[i]},${data.hardTheo[i]}\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
