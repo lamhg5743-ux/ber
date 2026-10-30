@@ -1,249 +1,325 @@
-import streamlit as st
+import cmath
+import tkinter as tk
+from tkinter import messagebox, ttk
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.special import erfc
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-# 1. Cấu hình giao diện Streamlit
-st.set_page_config(
-    page_title="Nghiên Cứu Hiệu Năng BER & Hệ Thống AMC Dùng GPR",
-    page_icon="📡",
-    layout="wide"
-)
 
-# 2. Các hàm giải tích tính BER lý thuyết
-def q_func(x):
-    return 0.5 * erfc(x / np.sqrt(2.0))
+class MicrowaveMatrixEngine:
+  """Lõi tính toán giải tích ma trận mạng vi ba."""
 
-def get_theoretical_ber(ebno_db, mod_name, code_rate):
-    ebno_lin = 10.0 ** (ebno_db / 10.0)
-    ebno_eff = ebno_lin * code_rate
-    
-    if mod_name in ['BPSK', 'QPSK']:
-        ber = q_func(np.sqrt(2.0 * ebno_eff))
-    elif mod_name == '8-PSK':
-        ber = (2.0 / 3.0) * q_func(np.sqrt(6.0 * ebno_eff) * np.sin(np.pi / 8.0))
-    elif mod_name == '16-QAM':
-        ber = 0.75 * q_func(np.sqrt(0.8 * ebno_eff))
-    elif mod_name == '64-QAM':
-        ber = (7.0 / 12.0) * q_func(np.sqrt((2.0 / 7.0) * ebno_eff))
+  @staticmethod
+  def y_to_s(Y: np.ndarray, Z0: float = 50.0) -> np.ndarray:
+    N = Y.shape[0]
+    I = np.eye(N, dtype=complex)
+    Y_bar = Y * Z0  # Y_bar = Y / Y0 = Y * Z0
+    denom = I + Y_bar
+    if np.abs(np.linalg.det(denom)) < 1e-12:
+      raise ValueError("Ma trận (I + Y_norm) suy biến, không thể đảo ma trận!")
+    return np.dot(I - Y_bar, np.linalg.inv(denom))
+
+  @staticmethod
+  def s_to_y(S: np.ndarray, Z0: float = 50.0) -> np.ndarray:
+    N = S.shape[0]
+    I = np.eye(N, dtype=complex)
+    denom = I + S
+    if np.abs(np.linalg.det(denom)) < 1e-12:
+      raise ValueError("Ma trận (I + S) suy biến, không thể đảo ma trận!")
+    Y_bar = np.dot(I - S, np.linalg.inv(denom))
+    return Y_bar / Z0
+
+  @staticmethod
+  def abcd_to_s(ABCD: np.ndarray, Z0: float = 50.0) -> np.ndarray:
+    A, B = ABCD[0, 0], ABCD[0, 1]
+    C, D = ABCD[1, 0], ABCD[1, 1]
+    delta = A + (B / Z0) + (C * Z0) + D
+    if np.abs(delta) < 1e-12:
+      raise ValueError("Mẫu số delta = A + B/Z0 + C*Z0 + D xấp xỉ 0!")
+
+    det_abcd = A * D - B * C
+    S11 = (A + (B / Z0) - (C * Z0) - D) / delta
+    S12 = 2.0 * det_abcd / delta
+    S21 = 2.0 / delta
+    S22 = (-A + (B / Z0) - (C * Z0) + D) / delta
+    return np.array([[S11, S12], [S21, S22]], dtype=complex)
+
+  @staticmethod
+  def s_to_abcd(S: np.ndarray, Z0: float = 50.0) -> np.ndarray:
+    S11, S12 = S[0, 0], S[0, 1]
+    S21, S22 = S[1, 0], S[1, 1]
+    if np.abs(S21) < 1e-12:
+      raise ValueError(
+          "Tham số S21 xấp xỉ 0 (mạng cách ly hoàn toàn), không tồn tại ma trận"
+          " ABCD!"
+      )
+
+    delta_s = S11 * S22 - S12 * S21
+    A = ((1.0 + S11) * (1.0 - S22) + S12 * S21) / (2.0 * S21)
+    B = Z0 * (((1.0 + S11) * (1.0 + S22) - S12 * S21) / (2.0 * S21))
+    C = (1.0 / Z0) * (((1.0 - S11) * (1.0 - S22) - S12 * S21) / (2.0 * S21))
+    D = ((1.0 - S11) * (1.0 + S22) + S12 * S21) / (2.0 * S21)
+    return np.array([[A, B], [C, D]], dtype=complex)
+
+  @staticmethod
+  def check_properties(S: np.ndarray, tol: float = 1e-5) -> dict:
+    """Đánh giá tính tương hỗ, đối xứng và không tiêu tán qua ma trận S."""
+    N = S.shape[0]
+    # 1. Tương hỗ: S = S^T
+    is_reciprocal = np.allclose(S, S.T, atol=tol)
+
+    # 2. Đối xứng: S11 == S22 và S12 == S21 (đối với 2 cổng)
+    is_symmetric = False
+    if N == 2:
+      is_symmetric = np.isclose(S[0, 0], S[1, 1], atol=tol) and np.isclose(
+          S[0, 1], S[1, 0], atol=tol
+      )
     else:
-        ber = q_func(np.sqrt(2.0 * ebno_eff))
-    return np.clip(ber, 1e-7, 0.5)
+      diag_equal = all(np.isclose(S[i, i], S[0, 0], atol=tol) for i in range(N))
+      is_symmetric = is_reciprocal and diag_equal
 
-# Danh mục cấu hình MCS chuẩn cho hệ thống AMC
-MCS_PROFILES = [
-    {"name": "MCS 1: BPSK (R=1/2)", "mod": "BPSK", "bits": 1, "cr": 0.50, "raw_tp": 0.50},
-    {"name": "MCS 2: QPSK (R=1/2)", "mod": "QPSK", "bits": 2, "cr": 0.50, "raw_tp": 1.00},
-    {"name": "MCS 3: QPSK (R=3/4)", "mod": "QPSK", "bits": 2, "cr": 0.75, "raw_tp": 1.50},
-    {"name": "MCS 4: 16-QAM (R=1/2)", "mod": "16-QAM", "bits": 4, "cr": 0.50, "raw_tp": 2.00},
-    {"name": "MCS 5: 16-QAM (R=3/4)", "mod": "16-QAM", "bits": 4, "cr": 0.75, "raw_tp": 3.00},
-    {"name": "MCS 6: 64-QAM (R=3/4)", "mod": "64-QAM", "bits": 6, "cr": 0.75, "raw_tp": 4.50},
-    {"name": "MCS 7: 64-QAM (R=5/6)", "mod": "64-QAM", "bits": 6, "cr": 0.83, "raw_tp": 5.00},
-]
+    # 3. Không tổn hao (Lossless): S^dag * S = I (Ma trận Unita)
+    S_conj_T = np.conjugate(S.T)
+    identity_check = np.dot(S_conj_T, S)
+    is_lossless = np.allclose(identity_check, np.eye(N), atol=tol)
 
-# 3. Huấn luyện mô hình GPR (chạy 1 lần duy nhất và lưu vào cache)
-@st.cache_resource
-def train_gpr_model():
-    np.random.seed(42)
-    mod_mapping = {'BPSK': 1, 'QPSK': 2, '8-PSK': 3, '16-QAM': 4, '64-QAM': 6}
-    code_rates = [0.5, 0.67, 0.75, 0.83, 1.0]
-    ebno_range = np.linspace(-2.0, 20.0, 25)
-    
-    X_list, y_list = [], []
-    for mod_name, bit_val in mod_mapping.items():
-        for cr in code_rates:
-            for ebno in ebno_range:
-                ber_theo = get_theoretical_ber(ebno, mod_name, cr)
-                log_ber_noisy = np.log10(ber_theo) + np.random.normal(0.0, 0.025)
-                X_list.append([ebno, bit_val, cr])
-                y_list.append(log_ber_noisy)
-                
-    X = np.array(X_list)
-    y = np.array(y_list)
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    kernel = C(1.0, (1e-3, 1e3)) * RBF(length_scale=[2.0, 1.0, 0.5]) + WhiteKernel(noise_level=1e-3)
-    gpr = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=3, random_state=42)
-    gpr.fit(X_train, y_train)
-    
-    y_pred_test = gpr.predict(X_test)
-    mae = mean_absolute_error(y_test, y_pred_test)
-    rmse = np.sqrt(mean_squared_error(y_test, y_pred_test))
-    r2 = r2_score(y_test, y_pred_test)
-    
-    return gpr, mae, rmse, r2, mod_mapping
+    return {
+        "Reciprocal": is_reciprocal,
+        "Symmetric": is_symmetric,
+        "Lossless": is_lossless,
+    }
 
-gpr_model, mae_val, rmse_val, r2_val, mod_mapping = train_gpr_model()
 
-# 4. Thiết lập thanh Sidebar chung
-st.sidebar.title("🎛️ Bảng Điều Khiển")
-ebno_slider = st.sidebar.slider(
-    "Tỷ số Eb/N0 của kênh (dB):",
-    min_value=-2.0, max_value=20.0, value=6.0, step=0.5
-)
+class MicrowaveGUI:
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("📱 Quét mã trải nghiệm")
-app_url = "https://share.streamlit.io"
-qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=160x160&data={app_url}"
-st.sidebar.image(qr_url, caption="Mở trên điện thoại")
+  def __init__(self, root):
+    self.root = root
+    self.root.title("Phần mềm Chuyển đổi Ma trận Vi ba [Đề tài 3]")
+    self.root.geometry("860x700")
 
-# 5. Phân chia 2 Tab chức năng trên giao diện chính
-tab1, tab2 = st.tabs([
-    "📊 TAB 1: Khảo Sát & Đánh Giá Mô Hình BER (GPR)", 
-    "📶 TAB 2: Hệ Thống Thích Ứng Kênh Truyền (AMC) Tự Động"
-])
+    self.engine = MicrowaveMatrixEngine()
+    self.entry_grid = []
 
-# ==========================================
-# NỘI DUNG TAB 1: BÀI CŨ (DỰ ĐOÁN ĐƯỜNG CONG BER)
-# ==========================================
-with tab1:
-    st.header("Khảo Sát Đường Đặc Tuyến BER Với Từng Sơ Đồ Điều Chế")
-    
-    col_t1_1, col_t1_2 = st.columns(2)
-    with col_t1_1:
-        mod_selected = st.selectbox(
-            "Chọn sơ đồ điều chế cần khảo sát:",
-            ['BPSK', 'QPSK', '8-PSK', '16-QAM', '64-QAM'],
-            index=3
-        )
-    with col_t1_2:
-        code_rate_dict = {'1/2': 0.5, '2/3': 0.67, '3/4': 0.75, '5/6': 0.83, '1 (Không mã hóa)': 1.0}
-        cr_label = st.selectbox("Tốc độ mã hóa kênh (Code Rate):", list(code_rate_dict.keys()), index=0)
-        cr_selected = code_rate_dict[cr_label]
-        
-    # Metrics độ chính xác
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Hệ số xác định (R²)", f"{r2_val:.4f}")
-    c1.caption("Độ tin cậy của thuật toán GPR")
-    c2.metric("Sai số MAE", f"{mae_val:.4f}")
-    c3.metric("Sai số RMSE", f"{rmse_val:.4f}")
-    
-    # Dự đoán tại điểm Eb/N0 hiện tại
-    bit_val = mod_mapping[mod_selected]
-    q_pt = np.array([[ebno_slider, bit_val, cr_selected]])
-    log_pred, std_pred = gpr_model.predict(q_pt, return_std=True)
-    ber_pred_val = 10.0 ** log_pred[0]
-    ber_theo_val = get_theoretical_ber(ebno_slider, mod_selected, cr_selected)
-    
-    c4.metric(
-        label=f"BER tại {ebno_slider:.1f} dB",
-        value=f"{ber_pred_val:.3e}",
-        delta=f"Lý thuyết: {ber_theo_val:.3e}",
-        delta_color="off"
+    self._build_controls()
+    self._rebuild_grid()
+
+  def _build_controls(self):
+    ctrl_frame = ttk.LabelFrame(
+        self.root, text=" Cấu hình tham số ", padding=10
     )
-    
-    # Vẽ đồ thị BER kèm khoảng tin cậy 95%
-    ebno_axis = np.linspace(-2.0, 16.0, 100)
-    X_eval = np.array([[e, bit_val, cr_selected] for e in ebno_axis])
-    y_log_eval, y_std_eval = gpr_model.predict(X_eval, return_std=True)
-    
-    ber_curve = 10.0 ** y_log_eval
-    ber_lower = 10.0 ** (y_log_eval - 1.96 * y_std_eval)
-    ber_upper = 10.0 ** (y_log_eval + 1.96 * y_std_eval)
-    ber_theo_axis = [get_theoretical_ber(e, mod_selected, cr_selected) for e in ebno_axis]
-    
-    fig1, ax = plt.subplots(figsize=(10, 4.5))
-    ax.plot(ebno_axis, ber_theo_axis, 'k--', label='Lý thuyết AWGN', linewidth=1.8)
-    ax.plot(ebno_axis, ber_curve, 'b-', label='GPR Dự đoán', linewidth=2.2)
-    ax.fill_between(ebno_axis, ber_lower, ber_upper, color='blue', alpha=0.18, label='Khoảng tin cậy 95% (±1.96σ)')
-    ax.plot(ebno_slider, ber_pred_val, 'ro', markersize=9, label=f'Điểm chọn ({ebno_slider:.1f} dB)')
-    ax.set_yscale('log')
-    ax.set_xlim(-2.0, 16.0)
-    ax.set_ylim(1e-6, 1.0)
-    ax.set_xlabel('$E_b/N_0$ (dB)', fontsize=11)
-    ax.set_ylabel('Tỷ lệ lỗi bit (BER)', fontsize=11)
-    ax.set_title(f'Đặc tuyến BER - {mod_selected} (R={cr_selected})', fontsize=13)
-    ax.grid(True, which="both", linestyle=":", alpha=0.6)
-    ax.legend(loc='upper right')
-    st.pyplot(fig1)
+    ctrl_frame.pack(fill="x", padx=10, pady=5)
 
-# ==========================================
-# NỘI DUNG TAB 2: ĐỀ TÀI 1 (HỆ THỐNG AMC TỰ ĐỘNG)
-# ==========================================
-with tab2:
-    st.header("Hệ Thống Thích Ứng Điều Chế & Mã Hóa Kênh (AMC)")
-    st.markdown("Hệ thống tự động sử dụng AI để ra quyết định lựa chọn bộ tham số MCS tối ưu.")
-    
-    col_t2_1, col_t2_2 = st.columns(2)
-    with col_t2_1:
-        target_ber = st.select_slider(
-            "Ngưỡng BER tối đa cho phép (Target BER):",
-            options=[1e-2, 1e-3, 1e-4], value=1e-3,
-            format_func=lambda x: f"{x:.1e}"
-        )
-    with col_t2_2:
-        robust_mode = st.checkbox("Kích hoạt chế độ An toàn (Dùng cận trên +1.96σ để chống rớt gói)", value=True)
-        
-    # Quyết định MCS tối ưu tại Eb/N0 hiện tại
-    best_profile = None
-    max_achieved_tp = -1.0
-    
-    for mcs in MCS_PROFILES:
-        pt = np.array([[ebno_slider, mcs['bits'], mcs['cr']]])
-        m_log, s_log = gpr_model.predict(pt, return_std=True)
-        eval_log = (m_log[0] + 1.96 * s_log[0]) if robust_mode else m_log[0]
-        p_ber = 10.0 ** eval_log
-        
-        bler = 1.0 - (1.0 - np.clip(p_ber, 0, 1.0)) ** 1000
-        eff_tp = mcs['raw_tp'] * (1.0 - bler)
-        
-        if p_ber <= target_ber and eff_tp > max_achieved_tp:
-            max_achieved_tp = eff_tp
-            best_profile = mcs
-            
-    if best_profile is None:
-        best_profile = MCS_PROFILES[0]
-        final_tp_val = 0.0
-        st.error("⚠️ Sóng quá yếu: Không cấu hình nào thỏa mãn ngưỡng lỗi. Hệ thống hạ về MCS 1 để duy trì kết nối cơ bản.")
+    # Chế độ chuyển đổi
+    ttk.Label(ctrl_frame, text="Phép chuyển đổi:").grid(
+        row=0, column=0, sticky="w", padx=5
+    )
+    self.mode_var = tk.StringVar(value="Y -> S")
+    mode_cb = ttk.Combobox(
+        ctrl_frame,
+        textvariable=self.mode_var,
+        values=["Y -> S", "S -> Y", "ABCD -> S", "S -> ABCD"],
+        state="readonly",
+        width=15,
+    )
+    mode_cb.grid(row=0, column=1, padx=5, pady=5)
+    mode_cb.bind("<<ComboboxSelected>>", self._on_mode_change)
+
+    # Số cổng N
+    ttk.Label(ctrl_frame, text="Số cổng N:").grid(
+        row=0, column=2, sticky="w", padx=5
+    )
+    self.n_var = tk.IntVar(value=2)
+    self.n_spin = ttk.Spinbox(
+        ctrl_frame,
+        from_=2,
+        to=6,
+        textvariable=self.n_var,
+        width=5,
+        command=self._rebuild_grid,
+    )
+    self.n_spin.grid(row=0, column=3, padx=5, pady=5)
+
+    # Trở kháng chuẩn Z0
+    ttk.Label(ctrl_frame, text="Trở kháng Z0 (Ω):").grid(
+        row=0, column=4, sticky="w", padx=5
+    )
+    self.z0_var = tk.DoubleVar(value=50.0)
+    ttk.Entry(ctrl_frame, textvariable=self.z0_var, width=8).grid(
+        row=0, column=5, padx=5, pady=5
+    )
+
+    # Nút bấm hành động
+    btn_frame = ttk.Frame(self.root, padding=5)
+    btn_frame.pack(fill="x", padx=10)
+    ttk.Button(
+        btn_frame, text="Thực hiện Chuyển đổi", command=self.process_conversion
+    ).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text="Tải Dữ liệu Mẫu", command=self.load_sample).pack(
+        side="left", padx=5
+    )
+    ttk.Button(btn_frame, text="Xóa Dữ liệu", command=self.clear_grid).pack(
+        side="left", padx=5
+    )
+
+    # Khung ma trận đầu vào
+    self.grid_frame = ttk.LabelFrame(
+        self.root, text=" Nhập Ma trận Nguồn (định dạng: a+bj) ", padding=10
+    )
+    self.grid_frame.pack(fill="x", padx=10, pady=5)
+
+    # Khung kết quả
+    res_frame = ttk.LabelFrame(self.root, text=" Ma trận Kết quả ", padding=10)
+    res_frame.pack(fill="both", expand=True, padx=10, pady=5)
+
+    self.res_text = tk.Text(
+        res_frame, height=12, font=("Courier New", 10), wrap="none"
+    )
+    self.res_text.pack(fill="both", expand=True)
+
+    # Panel tính chất mạng
+    self.prop_label = ttk.Label(
+        self.root,
+        text="Tính chất mạng: Chưa xác định",
+        font=("Arial", 10, "bold"),
+        foreground="#1E3A8A",
+    )
+    self.prop_label.pack(anchor="w", padx=15, pady=5)
+
+  def _on_mode_change(self, event=None):
+    mode = self.mode_var.get()
+    if "ABCD" in mode:
+      self.n_var.set(2)
+      self.n_spin.config(state="disabled")
     else:
-        final_tp_val = max_achieved_tp
-        
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Eb/N0 Kênh truyền", f"{ebno_slider:.1f} dB")
-    m2.metric("Quyết định MCS của AI", best_profile['name'])
-    m3.metric("Thông lượng khả dụng", f"{final_tp_val:.2f} bps/Hz")
-    
-    # Biểu đồ Thông lượng & Bậc thang chuyển vùng MCS
-    ebno_sweep = np.linspace(-2.0, 20.0, 120)
-    sweep_tp = []
-    sweep_idx = []
-    
-    for e in ebno_sweep:
-        cur_best_tp = -1.0
-        cur_idx = 0
-        for idx, mcs in enumerate(MCS_PROFILES):
-            pt = np.array([[e, mcs['bits'], mcs['cr']]])
-            m_l, s_l = gpr_model.predict(pt, return_std=True)
-            eval_l = (m_l[0] + 1.96 * s_l[0]) if robust_mode else m_l[0]
-            b_val = 10.0 ** eval_l
-            bler_v = 1.0 - (1.0 - np.clip(b_val, 0, 1.0)) ** 1000
-            t_val = mcs['raw_tp'] * (1.0 - bler_v)
-            if b_val <= target_ber and t_val > cur_best_tp:
-                cur_best_tp = t_val
-                cur_idx = idx
-        sweep_tp.append(max(0.0, cur_best_tp))
-        sweep_idx.append(cur_idx)
-        
-    fig2, (ax_tp, ax_step) = plt.subplots(2, 1, figsize=(10, 7), sharex=True)
-    ax_tp.plot(ebno_sweep, sweep_tp, 'g-', linewidth=2.2, label='Thông lượng AMC tự thích ứng')
-    ax_tp.plot(ebno_slider, final_tp_val, 'ro', markersize=9, label='Trạng thái hiện tại')
-    ax_tp.set_ylabel('Thông lượng (bps/Hz)', fontsize=11)
-    ax_tp.set_title('Đặc tuyến Thông Lượng Tối Ưu và Chuyển Đổi MCS Theo Điều Kiện Sóng', fontsize=12)
-    ax_tp.grid(True, linestyle=":", alpha=0.6)
-    ax_tp.legend(loc='upper left')
-    
-    ax_step.step(ebno_sweep, [i + 1 for i in sweep_idx], where='post', color='darkblue', linewidth=2)
-    ax_step.axvline(x=ebno_slider, color='red', linestyle='--', alpha=0.7)
-    ax_step.set_yticks(range(1, len(MCS_PROFILES) + 1))
-    ax_step.set_yticklabels([m['mod'] + f" (R={m['cr']})" for m in MCS_PROFILES])
-    ax_step.set_xlabel('$E_b/N_0$ của kênh truyền (dB)', fontsize=11)
-    ax_step.set_ylabel('Lựa chọn MCS', fontsize=11)
-    ax_step.grid(True, linestyle=":", alpha=0.6)
-    
-    st.pyplot(fig2)
+      self.n_spin.config(state="normal")
+    self._rebuild_grid()
+
+  def _rebuild_grid(self):
+    for row in self.entry_grid:
+      for e in row:
+        e.destroy()
+    self.entry_grid.clear()
+
+    N = self.n_var.get()
+    mode = self.mode_var.get()
+    prefix = mode.split(" ")[0]
+
+    for i in range(N):
+      row_entries = []
+      for j in range(N):
+        lbl = ttk.Label(
+            self.grid_frame,
+            text=f"{prefix}{i+1}{j+1}:",
+            font=("Arial", 8, "italic"),
+        )
+        lbl.grid(row=i * 2, column=j, padx=2, pady=1)
+        entry = ttk.Entry(self.grid_frame, width=14, justify="center")
+        entry.insert(0, "0")
+        entry.grid(row=i * 2 + 1, column=j, padx=4, pady=2)
+        row_entries.append(entry)
+      self.entry_grid.append(row_entries)
+
+  def _parse_input_matrix(self) -> np.ndarray:
+    N = self.n_var.get()
+    mat = np.zeros((N, N), dtype=complex)
+    for i in range(N):
+      for j in range(N):
+        txt = self.entry_grid[i][j].get().strip().replace(" ", "")
+        try:
+          mat[i, j] = complex(txt)
+        except ValueError:
+          raise ValueError(
+              f"Phần tử hàng {i+1}, cột {j+1} không đúng định dạng số phức"
+              " (VD: 0.02, 1-2j)!"
+          )
+    return mat
+
+  def process_conversion(self):
+    try:
+      Z0 = self.z0_var.get()
+      if Z0 <= 0:
+        messagebox.showerror("Lỗi", "Trở kháng Z0 phải là số thực dương!")
+        return
+
+      in_mat = self._parse_input_matrix()
+      mode = self.mode_var.get()
+
+      if mode == "Y -> S":
+        out_mat = self.engine.y_to_s(in_mat, Z0)
+        s_eval = out_mat
+        title_out = "MA TRẬN TÁN XẠ [S]:"
+      elif mode == "S -> Y":
+        out_mat = self.engine.s_to_y(in_mat, Z0)
+        s_eval = in_mat
+        title_out = "MA TRẬN DẪN NẠP [Y] (Siemens):"
+      elif mode == "ABCD -> S":
+        out_mat = self.engine.abcd_to_s(in_mat, Z0)
+        s_eval = out_mat
+        title_out = "MA TRẬN TÁN XẠ [S]:"
+      elif mode == "S -> ABCD":
+        out_mat = self.engine.s_to_abcd(in_mat, Z0)
+        s_eval = in_mat
+        title_out = "MA TRẬN CASCADE [ABCD]:"
+
+      props = self.engine.check_properties(s_eval)
+      self._display_results(out_mat, title_out, props)
+
+    except Exception as e:
+      messagebox.showerror("Lỗi xử lý", str(e))
+
+  def _display_results(
+      self, mat: np.ndarray, title: str, props: dict[str, bool]
+  ):
+    self.res_text.delete("1.0", tk.END)
+    self.res_text.insert(tk.END, f"{'='*60}\n {title}\n{'='*60}\n\n")
+
+    N = mat.shape[0]
+    self.res_text.insert(
+        tk.END, "--- 1. Biểu diễn Cartesian (Phần Thực + j*Phần Ảo) ---\n"
+    )
+    for i in range(N):
+      row_str = "  ".join([f"{mat[i, j]:.6f}" for j in range(N)])
+      self.res_text.insert(tk.END, f"  [ {row_str} ]\n")
+
+    self.res_text.insert(
+        tk.END, "\n--- 2. Biểu diễn Cực (Biên độ ∠ Góc Pha độ) ---\n"
+    )
+    for i in range(N):
+      row_str = "  ".join([
+          f"{abs(mat[i, j]):.5f} ∠ {np.degrees(cmath.phase(mat[i, j])):.2f}°"
+          for j in range(N)
+      ])
+      self.res_text.insert(tk.END, f"  [ {row_str} ]\n")
+
+    # Hiển thị tính chất
+    prop_str = (
+        f"Tính chất mạng vi ba: "
+        f"Tương hỗ (Reciprocal): {'CÓ' if props['Reciprocal'] else 'KHÔNG'}  |  "
+        f"Đối xứng (Symmetrical): {'CÓ' if props['Symmetric'] else 'KHÔNG'}  |  "
+        f"Không tiêu tán (Lossless): {'CÓ' if props['Lossless'] else 'KHÔNG'}"
+    )
+    self.prop_label.config(text=prop_str)
+
+  def load_sample(self):
+    """Tải dữ liệu mẫu: Đường dây truyền sóng 1/4 bước sóng (Z0 = 50 Ohm)."""
+    self.mode_var.set("ABCD -> S")
+    self._on_mode_change()
+    # A = 0, B = 50j, C = 0.02j, D = 0
+    sample = [["0", "50j"], ["0.02j", "0"]]
+    for i in range(2):
+      for j in range(2):
+        self.entry_grid[i][j].delete(0, tk.END)
+        self.entry_grid[i][j].insert(0, sample[i][j])
+
+  def clear_grid(self):
+    N = self.n_var.get()
+    for i in range(N):
+      for j in range(N):
+        self.entry_grid[i][j].delete(0, tk.END)
+        self.entry_grid[i][j].insert(0, "0")
+    self.res_text.delete("1.0", tk.END)
+    self.prop_label.config(text="Tính chất mạng: Chưa xác định")
+
+
+if __name__ == "__main__":
+  root = tk.Tk()
+  app = MicrowaveGUI(root)
+  root.mainloop()
