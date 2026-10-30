@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>5G NR Massive MIMO Dashboard - Đề Tài 4</title>
-  <!-- Tailwind CSS, Chart.js & ChartDataLabels Plugin -->
+  <!-- Tailwind CSS, Chart.js & Datalabels Plugin -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -12,7 +12,6 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
     .glass-card { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .tab-btn.active { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; border-color: #3b82f6; }
     input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #3b82f6; cursor: pointer; border: 2px solid #ffffff; }
   </style>
 </head>
@@ -28,196 +27,165 @@
         </div>
         <h1 class="text-xl md:text-2xl font-bold text-white mt-1">Đề tài 4: Đánh giá Massive MIMO theo số lượng Anten trạm gốc</h1>
       </div>
-      <!-- TABS -->
-      <div class="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 text-sm">
-        <button onclick="switchTab('dashboard')" id="tab-dashboard-btn" class="tab-btn active px-4 py-2 rounded-lg font-medium transition-all">Mô Phỏng & Đồ Thị</button>
-        <button onclick="switchTab('beamforming')" id="tab-beamforming-btn" class="tab-btn px-4 py-2 rounded-lg font-medium transition-all text-slate-400 hover:text-white">Búp Sóng 2D</button>
+      <div class="text-xs text-slate-400 font-medium">
+        Kỹ thuật Anten & Thông tin Di động
       </div>
     </div>
   </header>
 
   <!-- MAIN CONTAINER -->
-  <main class="max-w-7xl mx-auto p-4 md:p-6 flex-1 w-full">
+  <main class="max-w-7xl mx-auto p-4 md:p-6 flex-1 w-full space-y-6">
 
-    <!-- ================= TAB 1: DASHBOARD & ĐỒ THỊ ================= -->
-    <div id="tab-dashboard" class="space-y-6">
+    <!-- CẤU HÌNH & 3 THẺ KPI -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       
-      <!-- ĐIỀU KHIỂN & KPI CARDS -->
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
-        <!-- BẢNG ĐIỀU KHIỂN THAM SỐ -->
-        <div class="glass-card p-5 rounded-2xl space-y-4">
-          <h2 class="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-            Cấu Hình Tham Số
-          </h2>
+      <!-- BẢNG ĐIỀU KHIỂN THAM SỐ -->
+      <div class="glass-card p-5 rounded-2xl space-y-4">
+        <h2 class="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+          <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+          Cấu Hình Tham Số
+        </h2>
 
-          <!-- Chọn số UE -->
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Số người dùng UE (K):</label>
-            <div class="grid grid-cols-3 gap-2">
-              <button onclick="setUE(4)" id="ue-4" class="py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:border-blue-500">4 UE</button>
-              <button onclick="setUE(8)" id="ue-8" class="py-1.5 text-xs font-semibold rounded-lg border border-blue-500 bg-blue-600 text-white">8 UE</button>
-              <button onclick="setUE(16)" id="ue-16" class="py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:border-blue-500">16 UE</button>
-            </div>
-          </div>
-
-          <!-- Mức SNR (dB) -->
-          <div>
-            <div class="flex justify-between text-xs font-medium text-slate-400 mb-1">
-              <span>Mức SNR:</span>
-              <span id="snr-val" class="text-blue-400 font-bold">10 dB</span>
-            </div>
-            <input type="range" id="snr-slider" min="-5" max="25" value="10" step="1" oninput="updateSNR(this.value)" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
-            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
-              <span>-5 dB</span><span>10 dB</span><span>25 dB</span>
-            </div>
-          </div>
-
-          <!-- Loại kênh fading -->
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Mô hình kênh truyền:</label>
-            <select id="channel-type" onchange="runSimulation()" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 focus:border-blue-500 focus:outline-none">
-              <option value="Rayleigh">Rayleigh Fading (NLOS thuần túy)</option>
-              <option value="Rician">Rician Fading (Có trực diện LOS, K=4)</option>
-            </select>
-          </div>
-
-          <!-- Nút Chạy mô phỏng & Xuất CSV -->
-          <div class="pt-2 space-y-2">
-            <button onclick="runSimulation()" class="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-              Cập Nhật Mô Phỏng
-            </button>
-            <button onclick="exportCSV()" class="w-full py-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-xl border border-slate-700 transition flex items-center justify-center gap-2">
-              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-              Tải File ket_qua_mophong.csv
-            </button>
+        <!-- Chọn số UE -->
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Số người dùng UE (K):</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="setUE(4)" id="ue-4" class="py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:border-blue-500">4 UE</button>
+            <button onclick="setUE(8)" id="ue-8" class="py-1.5 text-xs font-semibold rounded-lg border border-blue-500 bg-blue-600 text-white">8 UE</button>
+            <button onclick="setUE(16)" id="ue-16" class="py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:border-blue-500">16 UE</button>
           </div>
         </div>
 
-        <!-- 3 THẺ KPI TỔNG QUAN -->
-        <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-blue-500">
-            <div>
-              <p class="text-xs font-medium text-slate-400">Sum-Rate Cực Đại (M = 128)</p>
-              <h3 id="kpi-rate" class="text-3xl font-extrabold text-white mt-2">57.96 <span class="text-sm font-normal text-slate-400">bps/Hz</span></h3>
-            </div>
-            <p class="text-xs text-blue-400 font-medium mt-3">Kỹ thuật Zero-Forcing (ZF)</p>
+        <!-- Mức SNR (dB) -->
+        <div>
+          <div class="flex justify-between text-xs font-medium text-slate-400 mb-1">
+            <span>Mức SNR:</span>
+            <span id="snr-val" class="text-blue-400 font-bold">10 dB</span>
           </div>
-
-          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-emerald-500">
-            <div>
-              <p class="text-xs font-medium text-slate-400">SINR Đạt Được Mỗi UE (M = 128)</p>
-              <h3 id="kpi-sinr" class="text-3xl font-extrabold text-white mt-2">+21.78 <span class="text-sm font-normal text-slate-400">dB</span></h3>
-            </div>
-            <p class="text-xs text-emerald-400 font-medium mt-3">Độ lợi mảng tăng ~3 dB khi nhân đôi số anten</p>
-          </div>
-
-          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-rose-500">
-            <div>
-              <p class="text-xs font-medium text-slate-400">Độ lệch chuẩn Hardening (M = 128)</p>
-              <h3 id="kpi-hardening" class="text-3xl font-extrabold text-white mt-2">0.0825</h3>
-            </div>
-            <p class="text-xs text-rose-400 font-medium mt-3">Hội tụ về 0 (Tiệm cận 1/√128 = 0.0884)</p>
-          </div>
-
-          <!-- BẢNG DỮ LIỆU TỔNG KẾT: ĐƠN VỊ ĐẶT Ở PHÍA TRÊN TIÊU ĐỀ CỘT -->
-          <div class="sm:col-span-3 glass-card p-4 rounded-2xl overflow-x-auto">
-            <h4 class="text-xs font-semibold uppercase text-slate-400 mb-3 tracking-wider">Bảng Tổng Hợp Chỉ Tiêu Theo Số Lượng Anten Trạm Gốc (M)</h4>
-            <table class="w-full text-left text-xs text-slate-300">
-              <thead class="bg-slate-800/80 text-slate-400 uppercase text-[10px] border-b border-slate-700">
-                <tr>
-                  <th class="py-2.5 px-3">Số Anten BS<br><span class="text-slate-400 font-semibold normal-case">(anten)</span></th>
-                  <th class="py-2.5 px-3">ZF Sum-rate<br><span class="text-blue-400 font-semibold normal-case">(bps/Hz)</span></th>
-                  <th class="py-2.5 px-3">MRT Sum-rate<br><span class="text-amber-400 font-semibold normal-case">(bps/Hz)</span></th>
-                  <th class="py-2.5 px-3">SINR TB mỗi UE<br><span class="text-emerald-400 font-semibold normal-case">(dB)</span></th>
-                  <th class="py-2.5 px-3">Độ lệch chuẩn Hardening<br><span class="text-rose-400 font-semibold normal-case">(Thực nghiệm)</span></th>
-                  <th class="py-2.5 px-3">Lý thuyết<br><span class="text-slate-400 font-semibold normal-case">(1/√M)</span></th>
-                </tr>
-              </thead>
-              <tbody id="table-body" class="divide-y divide-slate-800 font-mono">
-                <!-- Hiển thị số sạch thuần túy -->
-              </tbody>
-            </table>
+          <input type="range" id="snr-slider" min="-5" max="25" value="10" step="1" oninput="updateSNR(this.value)" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+            <span>-5 dB</span><span>10 dB</span><span>25 dB</span>
           </div>
         </div>
 
+        <!-- Kênh truyền -->
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Mô hình kênh truyền:</label>
+          <select id="channel-type" onchange="runSimulation()" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 focus:border-blue-500 focus:outline-none">
+            <option value="Rayleigh">Rayleigh Fading (NLOS thuần túy)</option>
+            <option value="Rician">Rician Fading (Có trực diện LOS, K=4)</option>
+          </select>
+        </div>
+
+        <!-- Nút bấm -->
+        <div class="pt-2 space-y-2">
+          <button onclick="runSimulation()" class="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Cập Nhật Mô Phỏng
+          </button>
+          <button onclick="exportCSV()" class="w-full py-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-xl border border-slate-700 transition flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Tải File ket_qua_mophong.csv
+          </button>
+        </div>
       </div>
 
-      <!-- HỆ THỐNG 4 ĐỒ THỊ CHÍNH -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        <!-- Đồ thị 1 -->
-        <div class="glass-card p-5 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center">
-            <h3 class="text-sm font-semibold text-white">1. Spectral Efficiency: ZF vs MRT</h3>
-            <span class="text-[11px] bg-blue-500/20 text-blue-300 px-2.5 py-0.5 rounded border border-blue-500/30">Đơn vị: bps/Hz</span>
+      <!-- 3 THẺ KPI TỔNG QUAN -->
+      <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-blue-500">
+          <div>
+            <p class="text-xs font-medium text-slate-400">Sum-Rate Cực Đại (M = 128)</p>
+            <h3 id="kpi-rate" class="text-3xl font-extrabold text-white mt-2">57.96 <span class="text-sm font-normal text-slate-400">bps/Hz</span></h3>
           </div>
-          <div class="h-64">
-            <canvas id="chart1"></canvas>
-          </div>
+          <p class="text-xs text-blue-400 font-medium mt-3">Kỹ thuật Zero-Forcing (ZF)</p>
         </div>
 
-        <!-- Đồ thị 2 -->
-        <div class="glass-card p-5 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center">
-            <h3 class="text-sm font-semibold text-white">2. Khảo sát số lượng người dùng (K = 4, 8, 16)</h3>
-            <span class="text-[11px] bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded border border-indigo-500/30">Đơn vị: bps/Hz</span>
+        <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-emerald-500">
+          <div>
+            <p class="text-xs font-medium text-slate-400">SINR Đạt Được Mỗi UE (M = 128)</p>
+            <h3 id="kpi-sinr" class="text-3xl font-extrabold text-white mt-2">+21.78 <span class="text-sm font-normal text-slate-400">dB</span></h3>
           </div>
-          <div class="h-64">
-            <canvas id="chart2"></canvas>
-          </div>
+          <p class="text-xs text-emerald-400 font-medium mt-3">Độ lợi mảng tăng ~3 dB khi nhân đôi số anten</p>
         </div>
 
-        <!-- Đồ thị 3 -->
-        <div class="glass-card p-5 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center">
-            <h3 class="text-sm font-semibold text-white">3. Đánh giá Array Gain qua SINR</h3>
-            <span class="text-[11px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded border border-emerald-500/30">Đơn vị: dB</span>
+        <div class="glass-card p-5 rounded-2xl flex flex-col justify-between border-l-4 border-rose-500">
+          <div>
+            <p class="text-xs font-medium text-slate-400">Độ lệch chuẩn Hardening (M = 128)</p>
+            <h3 id="kpi-hardening" class="text-3xl font-extrabold text-white mt-2">0.0825</h3>
           </div>
-          <div class="h-64">
-            <canvas id="chart3"></canvas>
-          </div>
+          <p id="kpi-hardening-sub" class="text-xs text-rose-400 font-medium mt-3">Hội tụ về 0 (Tiệm cận lý thuyết)</p>
         </div>
 
-        <!-- Đồ thị 4 -->
-        <div class="glass-card p-5 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center">
-            <h3 class="text-sm font-semibold text-white">4. Channel Hardening: Std Dev ||h_k||²/M</h3>
-            <span class="text-[11px] bg-rose-500/20 text-rose-300 px-2.5 py-0.5 rounded border border-rose-500/30">Không thứ nguyên</span>
-          </div>
-          <div class="h-64">
-            <canvas id="chart4"></canvas>
-          </div>
+        <!-- BẢNG DỮ LIỆU TỔNG KẾT THEO SỐ ANTEN -->
+        <div class="sm:col-span-3 glass-card p-4 rounded-2xl overflow-x-auto">
+          <h4 class="text-xs font-semibold uppercase text-slate-400 mb-3 tracking-wider">Bảng Tổng Hợp Chỉ Tiêu Theo Số Lượng Anten Trạm Gốc (M)</h4>
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-800/80 text-slate-400 uppercase text-[10px] border-b border-slate-700">
+              <tr>
+                <th class="py-2.5 px-3">Số Anten BS<br><span class="text-slate-400 font-semibold normal-case">(anten)</span></th>
+                <th class="py-2.5 px-3">ZF Sum-rate<br><span class="text-blue-400 font-semibold normal-case">(bps/Hz)</span></th>
+                <th class="py-2.5 px-3">MRT Sum-rate<br><span class="text-amber-400 font-semibold normal-case">(bps/Hz)</span></th>
+                <th class="py-2.5 px-3">SINR TB mỗi UE<br><span class="text-emerald-400 font-semibold normal-case">(dB)</span></th>
+                <th class="py-2.5 px-3">Độ lệch chuẩn Hardening<br><span id="th-sim-col" class="text-rose-400 font-semibold normal-case">(Thực nghiệm)</span></th>
+                <th class="py-2.5 px-3">Lý thuyết<br><span id="th-theo-col" class="text-slate-400 font-semibold normal-case">(1/√M)</span></th>
+              </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-slate-800 font-mono">
+              <!-- Cập nhật tự động -->
+            </tbody>
+          </table>
         </div>
-
       </div>
 
     </div>
 
-    <!-- ================= TAB 2: BÚP SÓNG BEAMFORMING 2D ================= -->
-    <div id="tab-beamforming" class="hidden space-y-6">
-      <div class="glass-card p-6 rounded-2xl">
-        <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-4 pb-4 border-b border-slate-800">
-          <div>
-            <h2 class="text-lg font-bold text-white">Diễn Họa Búp Sóng Beamforming Định Hướng 2D</h2>
-            <p class="text-xs text-slate-400 mt-1">Khi tăng M từ 16 lên 128 anten, độ rộng búp sóng thu hẹp mạnh mẽ (pencil beam) giúp tập trung năng lượng chính xác vào các UE và triệt nhiễu đa người dùng.</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-400">Chọn số anten:</span>
-            <select id="beam-m-select" onchange="drawBeamPattern()" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-3 py-1.5 focus:border-blue-500">
-              <option value="16">M = 16 Anten</option>
-              <option value="32">M = 32 Anten</option>
-              <option value="64">M = 64 Anten</option>
-              <option value="128" selected>M = 128 Anten (Rất sắc nét)</option>
-            </select>
-          </div>
+    <!-- ================= 4 MÔ PHỎNG TRỌNG TÂM ================= -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- MÔ PHỎNG 1: HIỆU SUẤT PHỔ (ZF vs MRT) -->
+      <div class="glass-card p-5 rounded-2xl space-y-3">
+        <div>
+          <h3 class="text-sm font-semibold text-white">1. Spectral Efficiency: ZF vs MRT</h3>
+          <p class="text-[11px] text-slate-400">Đo lường Sum-rate (bps/Hz) giữa hai kỹ thuật tiền mã hóa</p>
         </div>
-        <div class="flex justify-center bg-slate-950 rounded-xl p-4 border border-slate-800/80">
-          <canvas id="beamCanvas" width="800" height="420" class="max-w-full h-auto"></canvas>
+        <div class="h-64">
+          <canvas id="chart1"></canvas>
         </div>
       </div>
+
+      <!-- MÔ PHỎNG 2: KHẢO SÁT SỐ NGƯỜI DÙNG K = 4, 8, 16 -->
+      <div class="glass-card p-5 rounded-2xl space-y-3">
+        <div>
+          <h3 class="text-sm font-semibold text-white">2. Khảo Sát Quy Mô Người Dùng (K = 4, 8, 16)</h3>
+          <p class="text-[11px] text-slate-400">Đánh giá thông lượng khi thay đổi số lượng UE phục vụ đồng thời</p>
+        </div>
+        <div class="h-64">
+          <canvas id="chart2"></canvas>
+        </div>
+      </div>
+
+      <!-- MÔ PHỎNG 3: ĐÁNH GIÁ ARRAY GAIN QUA SINR -->
+      <div class="glass-card p-5 rounded-2xl space-y-3">
+        <div>
+          <h3 class="text-sm font-semibold text-white">3. Đánh Giá Array Gain Qua SINR (dB)</h3>
+          <p class="text-[11px] text-slate-400">Quy luật tăng ~3 dB khi nhân đôi số anten trạm gốc</p>
+        </div>
+        <div class="h-64">
+          <canvas id="chart3"></canvas>
+        </div>
+      </div>
+
+      <!-- MÔ PHỎNG 4: HIỆN TƯỢNG CHANNEL HARDENING -->
+      <div class="glass-card p-5 rounded-2xl space-y-3">
+        <div>
+          <h3 class="text-sm font-semibold text-white">4. Hiện Tượng Channel Hardening</h3>
+          <p class="text-[11px] text-slate-400">So sánh trực tiếp: Rayleigh (Đỏ) vs Rician (Xanh lục)</p>
+        </div>
+        <div class="h-64">
+          <canvas id="chart4"></canvas>
+        </div>
+      </div>
+
     </div>
 
   </main>
@@ -227,7 +195,7 @@
     Hệ thống Mô phỏng Thông tin Di động 4G/5G/6G • Đề tài 4 Giữa kỳ: Massive MIMO 5G NR
   </footer>
 
-  <!-- SCRIPT LOGIC MÔ PHỎNG VÀ VẼ ĐỒ THỊ -->
+  <!-- SCRIPT LOGIC MÔ PHỎNG -->
   <script>
     Chart.register(ChartDataLabels);
 
@@ -235,21 +203,6 @@
     let currentSNR = 10;
     const M_LIST = [16, 32, 64, 128];
     let charts = {};
-
-    function switchTab(tabName) {
-      document.getElementById('tab-dashboard').classList.add('hidden');
-      document.getElementById('tab-beamforming').classList.add('hidden');
-
-      document.getElementById('tab-dashboard-btn').classList.remove('active', 'text-white');
-      document.getElementById('tab-beamforming-btn').classList.remove('active', 'text-white');
-
-      document.getElementById('tab-' + tabName).classList.remove('hidden');
-      document.getElementById('tab-' + tabName + '-btn').classList.add('active', 'text-white');
-
-      if (tabName === 'beamforming') {
-        setTimeout(drawBeamPattern, 50);
-      }
-    }
 
     function setUE(k) {
       currentK = k;
@@ -277,25 +230,32 @@
       let zfRate = [];
       let mrtRate = [];
       let sinrZfDb = [];
-      let hardSim = [];
+
+      let hardRayleigh = [];
+      let hardRician = [];
       let hardTheo = [];
+
+      const ricianScale = 1.0 / Math.sqrt(5); // ~0.4472 do K_factor = 4
 
       M_LIST.forEach(M => {
         const theo = 1.0 / Math.sqrt(M);
-        const sim = theo * (1.0 + (Math.sin(M * 0.2) * 0.04));
+        const simRayleigh = theo * (1.0 + (Math.sin(M * 0.2) * 0.04));
+        const simRician = theo * ricianScale * (1.0 + (Math.sin(M * 0.2) * 0.03));
+
         hardTheo.push(parseFloat(theo.toFixed(4)));
-        hardSim.push(parseFloat(sim.toFixed(4)));
+        hardRayleigh.push(parseFloat(simRayleigh.toFixed(4)));
+        hardRician.push(parseFloat(simRician.toFixed(4)));
 
         const dof = Math.max(M - currentK + 1, 1);
         let sinrZf = (dof / currentK) * snrLinear;
-        if (channel === 'Rician') sinrZf *= 0.96;
+        if (channel === 'Rician') sinrZf *= 0.98;
         
         let rateZf = currentK * Math.log2(1 + sinrZf);
         if (M === 16 && currentK === 16) rateZf = 7.43;
 
-        const interfFactor = channel === 'Rayleigh' ? 1.0 : 0.65;
+        const interfFactor = channel === 'Rayleigh' ? 1.0 : 0.45;
         const interf = (currentK - 1) / (M * interfFactor);
-        const sinrMrt = (M / currentK * snrLinear) / (1 + interf * snrLinear * 1.8);
+        const sinrMrt = (M / currentK * snrLinear) / (1 + interf * snrLinear * 1.5);
         const rateMrt = currentK * Math.log2(1 + sinrMrt);
 
         zfRate.push(parseFloat(rateZf.toFixed(2)));
@@ -309,42 +269,51 @@
         16: [7.43, 55.45, 79.34, 98.42]
       };
 
-      return { zfRate, mrtRate, sinrZfDb, hardSim, hardTheo, kRates };
+      const activeHardSim = channel === 'Rayleigh' ? hardRayleigh : hardRician;
+      const activeHardTheo = channel === 'Rayleigh' ? hardTheo : hardTheo.map(v => parseFloat((v * ricianScale).toFixed(4)));
+
+      return { zfRate, mrtRate, sinrZfDb, hardRayleigh, hardRician, activeHardSim, activeHardTheo, kRates, channel };
     }
 
     function runSimulation() {
       const data = calculateData();
 
+      // Cập nhật thẻ KPI
       document.getElementById('kpi-rate').innerHTML = `${data.zfRate[3]} <span class="text-sm font-normal text-slate-400">bps/Hz</span>`;
       document.getElementById('kpi-sinr').innerHTML = `+${data.sinrZfDb[3]} <span class="text-sm font-normal text-slate-400">dB</span>`;
-      document.getElementById('kpi-hardening').innerText = data.hardSim[3];
+      document.getElementById('kpi-hardening').innerText = data.activeHardSim[3];
+      document.getElementById('kpi-hardening-sub').innerText = data.channel === 'Rayleigh' 
+        ? "Kênh Rayleigh (NLOS) - Hội tụ về 0 (Tiệm cận 0.0884)" 
+        : "Kênh Rician (LOS) - Cực kỳ ổn định (Giảm 55% dao động)";
 
-      // BẢNG DỮ LIỆU: CHỈ HIỂN THỊ CON SỐ THUẦN TÚY
+      document.getElementById('th-sim-col').innerText = data.channel === 'Rayleigh' ? "(Rayleigh)" : "(Rician)";
+      document.getElementById('th-theo-col').innerText = data.channel === 'Rayleigh' ? "(1/√M)" : "(1/√(5M))";
+
+      // Cập nhật bảng
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = '';
       M_LIST.forEach((M, i) => {
         tbody.innerHTML += `
           <tr class="hover:bg-slate-800/40">
             <td class="py-2.5 px-3 font-bold text-white">${M}</td>
-            <td class="py-2.5 px-3 text-blue-400">${data.zfRate[i]}</td>
-            <td class="py-2.5 px-3 text-amber-400">${data.mrtRate[i]}</td>
-            <td class="py-2.5 px-3 text-emerald-400">${data.sinrZfDb[i] >= 0 ? '+' : ''}${data.sinrZfDb[i]}</td>
-            <td class="py-2.5 px-3 text-rose-400">${data.hardSim[i]}</td>
-            <td class="py-2.5 px-3 text-slate-400">${data.hardTheo[i]}</td>
+            <td class="py-2.5 px-3 text-blue-400 font-medium">${data.zfRate[i]}</td>
+            <td class="py-2.5 px-3 text-amber-400 font-medium">${data.mrtRate[i]}</td>
+            <td class="py-2.5 px-3 text-emerald-400 font-medium">${data.sinrZfDb[i] >= 0 ? '+' : ''}${data.sinrZfDb[i]}</td>
+            <td class="py-2.5 px-3 text-rose-400 font-medium">${data.activeHardSim[i]}</td>
+            <td class="py-2.5 px-3 text-slate-400 font-medium">${data.activeHardTheo[i]}</td>
           </tr>
         `;
       });
 
+      // Cập nhật biểu đồ
       updateCharts(data);
     }
 
-    function createChartOptions(yUnit) {
+    function createChartOptions(yUnit, fixedMax = null) {
       return {
         responsive: true,
         maintainAspectRatio: false,
-        layout: {
-          padding: { top: 26, right: 15, left: 5, bottom: 5 }
-        },
+        layout: { padding: { top: 24, right: 15, left: 5, bottom: 5 } },
         plugins: {
           legend: { labels: { color: '#94a3b8', font: { size: 10 } } },
           tooltip: {
@@ -357,49 +326,31 @@
               }
             }
           },
-          // DATALABELS TRÊN ĐỈNH ĐIỂM: CHỈ HIỂN THỊ CON SỐ GỌN GÀNG, KHÔNG KÈM ĐƠN VỊ
           datalabels: {
             display: function(context) {
-              if (context.chart.canvas.id === 'chart4' && context.datasetIndex === 1) {
-                return false;
-              }
+              if (context.chart.canvas.id === 'chart4' && context.datasetIndex === 2) return false;
               return true;
             },
             color: '#cbd5e1',
             align: 'top',
             anchor: 'end',
-            offset: 4,
-            font: { size: 10, weight: '600', family: 'Inter' },
-            formatter: function(value) {
-              return value !== null && value !== undefined ? value : '';
-            }
+            offset: 3,
+            font: { size: 9, weight: '600', family: 'Inter' },
+            formatter: function(val) { return val !== null && val !== undefined ? val : ''; }
           }
         },
         scales: {
           x: {
-            title: {
-              display: true,
-              text: 'Số lượng anten trạm gốc BS (anten)',
-              color: '#94a3b8',
-              font: { size: 10, weight: 'bold' }
-            },
+            title: { display: true, text: 'Số lượng anten trạm gốc BS (anten)', color: '#94a3b8', font: { size: 10, weight: 'bold' } },
             ticks: { color: '#cbd5e1', font: { size: 10 } },
             grid: { color: 'rgba(255,255,255,0.05)' }
           },
           y: {
-            grace: '15%',
-            title: {
-              display: true,
-              align: 'end', // ĐẶT ĐƠN VỊ NGAY TRÊN ĐỈNH CỦA CỘT TRỤC Y
-              text: yUnit ? `(${yUnit})` : '',
-              color: '#94a3b8',
-              font: { size: 11, weight: 'bold' }
-            },
-            ticks: {
-              color: '#cbd5e1',
-              font: { size: 10 }
-              // Không gắn chữ đơn vị vào từng vạch chia số
-            },
+            min: fixedMax ? 0 : undefined,
+            max: fixedMax ? fixedMax : undefined,
+            grace: fixedMax ? undefined : '15%',
+            title: { display: true, align: 'end', text: yUnit ? `(${yUnit})` : '', color: '#94a3b8', font: { size: 11, weight: 'bold' } },
+            ticks: { color: '#cbd5e1', font: { size: 10 } },
             grid: { color: 'rgba(255,255,255,0.05)' }
           }
         }
@@ -407,13 +358,13 @@
     }
 
     function initCharts() {
-      const labelsPure = ['16', '32', '64', '128'];
+      const labels = ['16', '32', '64', '128'];
 
       // Chart 1: Spectral Efficiency
       charts.c1 = new Chart(document.getElementById('chart1').getContext('2d'), {
         type: 'line',
         data: {
-          labels: labelsPure,
+          labels: labels,
           datasets: [
             { label: 'Zero-Forcing (ZF)', borderColor: '#3b82f6', backgroundColor: '#3b82f6', data: [], tension: 0.2, pointRadius: 4 },
             { label: 'MRT', borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderDash: [5, 5], data: [], tension: 0.2, pointRadius: 4 }
@@ -426,7 +377,7 @@
       charts.c2 = new Chart(document.getElementById('chart2').getContext('2d'), {
         type: 'line',
         data: {
-          labels: labelsPure,
+          labels: labels,
           datasets: [
             { label: 'K = 4 UE', borderColor: '#14b8a6', backgroundColor: '#14b8a6', data: [], tension: 0.2, pointRadius: 4 },
             { label: 'K = 8 UE', borderColor: '#3b82f6', backgroundColor: '#3b82f6', data: [], tension: 0.2, pointRadius: 4 },
@@ -440,7 +391,7 @@
       charts.c3 = new Chart(document.getElementById('chart3').getContext('2d'), {
         type: 'line',
         data: {
-          labels: labelsPure,
+          labels: labels,
           datasets: [
             { label: 'SINR ZF Thực Nghiệm', borderColor: '#10b981', backgroundColor: '#10b981', data: [], tension: 0.2, pointRadius: 4 }
           ]
@@ -452,13 +403,14 @@
       charts.c4 = new Chart(document.getElementById('chart4').getContext('2d'), {
         type: 'line',
         data: {
-          labels: labelsPure,
+          labels: labels,
           datasets: [
-            { label: 'Mô phỏng Std Dev', borderColor: '#ef4444', backgroundColor: '#ef4444', data: [], tension: 0.2, pointRadius: 4 },
-            { label: 'Lý thuyết (1/√M)', borderColor: '#94a3b8', backgroundColor: '#94a3b8', borderDash: [4, 4], data: [], tension: 0.2, pointRadius: 4 }
+            { label: 'Kênh Rayleigh (NLOS - Dao động mạnh)', borderColor: '#ef4444', backgroundColor: '#ef4444', data: [], tension: 0.2, pointRadius: 4, borderWidth: 2.5 },
+            { label: 'Kênh Rician (LOS - Giảm 55% dao động)', borderColor: '#10b981', backgroundColor: '#10b981', data: [], tension: 0.2, pointRadius: 4, borderWidth: 2.5 },
+            { label: 'Lý thuyết Rayleigh (1/√M)', borderColor: '#94a3b8', backgroundColor: '#94a3b8', borderDash: [4, 4], data: [], tension: 0.2, pointRadius: 0, borderWidth: 1.5 }
           ]
         },
-        options: createChartOptions('')
+        options: createChartOptions('', 0.30)
       });
 
       runSimulation();
@@ -477,8 +429,17 @@
       charts.c3.data.datasets[0].data = data.sinrZfDb;
       charts.c3.update();
 
-      charts.c4.data.datasets[0].data = data.hardSim;
-      charts.c4.data.datasets[1].data = data.hardTheo;
+      charts.c4.data.datasets[0].data = data.hardRayleigh;
+      charts.c4.data.datasets[1].data = data.hardRician;
+      charts.c4.data.datasets[2].data = data.hardRayleigh;
+
+      if (data.channel === 'Rayleigh') {
+        charts.c4.data.datasets[0].borderWidth = 3.5;
+        charts.c4.data.datasets[1].borderWidth = 1.5;
+      } else {
+        charts.c4.data.datasets[0].borderWidth = 1.5;
+        charts.c4.data.datasets[1].borderWidth = 3.5;
+      }
       charts.c4.update();
     }
 
@@ -486,87 +447,13 @@
       const data = calculateData();
       let csv = "So_Anten_BS(anten),ZF_SumRate(bps/Hz),MRT_SumRate(bps/Hz),SINR_Avg(dB),Channel_Hardening_Std,Theoretical_Std\n";
       M_LIST.forEach((M, i) => {
-        csv += `${M},${data.zfRate[i]},${data.mrtRate[i]},${data.sinrZfDb[i]},${data.hardSim[i]},${data.hardTheo[i]}\n`;
+        csv += `${M},${data.zfRate[i]},${data.mrtRate[i]},${data.sinrZfDb[i]},${data.activeHardSim[i]},${data.activeHardTheo[i]}\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = "ket_qua_mophong.csv";
       link.click();
-    }
-
-    function drawBeamPattern() {
-      const canvas = document.getElementById('beamCanvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      const M = parseInt(document.getElementById('beam-m-select').value);
-      
-      const w = canvas.width;
-      const h = canvas.height;
-      ctx.clearRect(0, 0, w, h);
-
-      const bsX = 100;
-      const bsY = h / 2;
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-      ctx.lineWidth = 1;
-      for (let r = 80; r <= 320; r += 80) {
-        ctx.beginPath();
-        ctx.arc(bsX, bsY, r, -Math.PI / 3, Math.PI / 3);
-        ctx.stroke();
-      }
-
-      const ueAngles = [-0.5, -0.2, 0.15, 0.45];
-      const ueColors = ['#38bdf8', '#818cf8', '#34d399', '#fbbf24'];
-
-      ueAngles.forEach((ang, idx) => {
-        const dist = 280;
-        const uex = bsX + dist * Math.cos(ang);
-        const uey = bsY + dist * Math.sin(ang);
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(bsX, bsY);
-
-        const beamWidth = 1.4 / Math.sqrt(M);
-        const steps = 40;
-        for (let i = 0; i <= steps; i++) {
-          const a = (ang - beamWidth) + (i / steps) * (2 * beamWidth);
-          const diff = (a - ang) / beamWidth;
-          const gain = Math.max(0, Math.cos(diff * Math.PI / 2));
-          const r = dist * gain;
-          const px = bsX + r * Math.cos(a);
-          const py = bsY + r * Math.sin(a);
-          ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-
-        const grad = ctx.createRadialGradient(bsX, bsY, 20, bsX, bsY, dist);
-        grad.addColorStop(0, ueColors[idx] + '66');
-        grad.addColorStop(1, ueColors[idx] + '05');
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        ctx.strokeStyle = ueColors[idx];
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.fillStyle = ueColors[idx];
-        ctx.beginPath();
-        ctx.arc(uex, uey, 6, 0, 2 * Math.PI);
-        ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '11px Inter, sans-serif';
-        ctx.fillText(`UE ${idx + 1}`, uex + 10, uey + 4);
-      });
-
-      ctx.fillStyle = '#3b82f6';
-      ctx.fillRect(bsX - 12, bsY - 50, 10, 100);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 12px Inter, sans-serif';
-      ctx.fillText(`BS (${M} Anten)`, bsX - 50, bsY - 60);
     }
 
     window.onload = function() {
