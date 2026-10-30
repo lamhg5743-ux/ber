@@ -105,4 +105,68 @@ else:
   def_val = [["0", "0"], ["0", "0"]]
 
 st.write("### Ma trận đầu vào (hỗ trợ số thực hoặc số phức `a+bj`):")
-col1, col2 = st.columns
+col1, col2 = st.columns(2)
+m11 = col1.text_input("Phần tử [1,1]:", def_val[0][0])
+m12 = col2.text_input("Phần tử [1,2]:", def_val[0][1])
+m21 = col1.text_input("Phần tử [2,1]:", def_val[1][0])
+m22 = col2.text_input("Phần tử [2,2]:", def_val[1][1])
+
+if st.button("Thực hiện chuyển đổi", type="primary"):
+  try:
+    in_mat = np.array(
+        [
+            [complex(m11.replace(" ", "")), complex(m12.replace(" ", ""))],
+            [complex(m21.replace(" ", "")), complex(m22.replace(" ", ""))],
+        ],
+        dtype=complex,
+    )
+
+    if mode == "ABCD -> S (Mạng 2 cửa)":
+      out_mat = MicrowaveEngine.abcd_to_s(in_mat, Z0)
+      s_eval = out_mat
+      name_res = "Ma trận Tán xạ [S]"
+    elif mode == "S -> ABCD (Mạng 2 cửa)":
+      out_mat = MicrowaveEngine.s_to_abcd(in_mat, Z0)
+      s_eval = in_mat
+      name_res = "Ma trận Truyền đạt [ABCD]"
+    elif mode == "Y -> S (Mạng 2 cửa)":
+      out_mat = MicrowaveEngine.y_to_s(in_mat, Z0)
+      s_eval = out_mat
+      name_res = "Ma trận Tán xạ [S]"
+    else:
+      out_mat = MicrowaveEngine.s_to_y(in_mat, Z0)
+      s_eval = in_mat
+      name_res = "Ma trận Dẫn nạp [Y] (S)"
+
+    props = MicrowaveEngine.check_properties(s_eval)
+    st.success(f"Kết quả {name_res}:")
+
+    st.write("**1. Dạng Cartesian ($R + jX$):**")
+    cartesian_view = [
+        [f"{out_mat[i, j].real:.5f} + {out_mat[i, j].imag:.5f}j" for j in range(2)]
+        for i in range(2)
+    ]
+    st.table(cartesian_view)
+
+    st.write("**2. Dạng Cực (Biên độ $\\angle$ Góc Pha):**")
+    polar_view = [
+        [
+            (
+                f"{abs(out_mat[i, j]):.4f} ∠"
+                f" {np.degrees(cmath.phase(out_mat[i, j])):.2f}°"
+            )
+            for j in range(2)
+        ]
+        for i in range(2)
+    ]
+    st.table(polar_view)
+
+    st.info(
+        f"**Đánh giá tính chất mạng vi ba:**\n\n"
+        f"- **Tính tương hỗ (Reciprocal):** {'CÓ' if props['Reciprocal'] else 'KHÔNG'}\n\n"
+        f"- **Tính đối xứng (Symmetrical):** {'CÓ' if props['Symmetric'] else 'KHÔNG'}\n\n"
+        f"- **Tính không tiêu tán (Lossless):**"
+        f" {'CÓ' if props['Lossless'] else 'KHÔNG'}"
+    )
+  except Exception as err:
+    st.error(f"Lỗi cú pháp hoặc suy biến: {err}")
