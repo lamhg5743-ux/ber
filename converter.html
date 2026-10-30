@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chuyển đổi Ma trận Mạng Vi ba [Đề tài số 3]</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      margin: 0;
+      padding: 30px 15px;
+      display: flex;
+      justify-content: center;
+    }
+    .card {
+      background: #ffffff;
+      max-width: 780px;
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+      padding: 28px;
+      box-sizing: border-box;
+    }
+    h2 {
+      color: #1e3a8a;
+      margin: 0 0 8px 0;
+      text-align: center;
+      font-size: 24px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .flex-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .flex-col {
+      flex: 1;
+    }
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      display: block;
+      margin-bottom: 6px;
+    }
+    select, input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .matrix-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .matrix-grid input {
+      text-align: center;
+      font-family: Consolas, monospace;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    button {
+      padding: 11px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-run {
+      background: #2563eb;
+      color: #fff;
+      flex: 2;
+    }
+    .btn-run:hover { background: #1d4ed8; }
+    .btn-sec {
+      background: #e2e8f0;
+      color: #334155;
+      flex: 1;
+    }
+    .btn-sec:hover { background: #cbd5e1; }
+    .alert-error {
+      color: #b91c1c;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-top: 14px;
+      display: none;
+      font-size: 14px;
+    }
+    .results {
+      margin-top: 22px;
+      padding: 20px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      display: none;
+    }
+    .results h3 {
+      margin-top: 0;
+      color: #0f172a;
+      font-size: 18px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+    td {
+      border: 1px solid #cbd5e1;
+      padding: 9px;
+      text-align: center;
+      background: #fff;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+    }
+    .badge-box {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 12px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Phần mềm Chuyển đổi Ma trận Mạng Vi ba</h2>
+  <div class="subtitle">Tính toán chuyển đổi hai chiều [Y] ↔ [S] và [ABCD] ↔ [S] (Mạng 2 cửa)</div>
+
+  <div class="flex-row">
+    <div class="flex-col">
+      <label for="mode">Phép chuyển đổi:</label>
+      <select id="mode">
+        <option value="ABCD_TO_S">ABCD -> S</option>
+        <option value="S_TO_ABCD">S -> ABCD</option>
+        <option value="Y_TO_S">Y -> S</option>
+        <option value="S_TO_Y">S -> Y</option>
+      </select>
+    </div>
+    <div class="flex-col">
+      <label for="z0">Trở kháng chuẩn Z₀ (Ω):</label>
+      <input type="number" id="z0" value="50" min="1" step="1">
+    </div>
+  </div>
+
+  <div class="matrix-box">
+    <label>Nhập ma trận nguồn (chấp nhận số thực hoặc số phức dạng a+bj):</label>
+    <div class="matrix-grid">
+      <div><small>Phần tử [1,1]:</small><input type="text" id="m11" value="0"></div>
+      <div><small>Phần tử [1,2]:</small><input type="text" id="m12" value="50j"></div>
+      <div><small>Phần tử [2,1]:</small><input type="text" id="m21" value="0.02j"></div>
+      <div><small>Phần tử [2,2]:</small><input type="text" id="m22" value="0"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-run" onclick="calculateMatrix()">Thực hiện Chuyển đổi</button>
+    <button class="btn-sec" onclick="loadSampleData('lambda4')">Mẫu Dây λ/4</button>
+    <button class="btn-sec" onclick="loadSampleData('attenuator')">Mẫu Suy hao 3dB</button>
+  </div>
+
+  <div id="err-box" class="alert-error"></div>
+
+  <div id="res-container" class="results">
+    <h3 id="res-header">Ma trận kết quả:</h3>
+
+    <b>1. Biểu diễn Cartesian (R + jX):</b>
+    <table>
+      <tr><td id="r11-cart"></td><td id="r12-cart"></td></tr>
+      <tr><td id="r21-cart"></td><td id="r22-cart"></td></tr>
+    </table>
+
+    <b>2. Biểu diễn Cực (Biên độ ∠ Pha độ):</b>
+    <table>
+      <tr><td id="r11-pol"></td><td id="r12-pol"></td></tr>
+      <tr><td id="r21-pol"></td><td id="r22-pol"></td></tr>
+    </table>
+
+    <div class="badge-box" id="prop-view"></div>
+  </div>
+</div>
+
+<script>
+class Complex {
+  constructor(re, im = 0) {
+    this.re = re;
+    this.im = im;
+  }
+  add(b) { return new Complex(this.re + b.re, this.im + b.im); }
+  sub(b) { return new Complex(this.re - b.re, this.im - b.im); }
+  mul(b) {
+    return new Complex(this.re * b.re - this.im * b.im, this.re * b.im + this.im * b.re);
+  }
+  div(b) {
+    const d = b.re * b.re + b.im * b.im;
+    if (d === 0) throw new Error("Mẫu số bằng 0 (chia cho 0)!");
+    return new Complex((this.re * b.re + this.im * b.im) / d, (this.im * b.re - this.re * b.im) / d);
+  }
+  abs() { return Math.hypot(this.re, this.im); }
+  deg() { return Math.atan2(this.im, this.re) * (180 / Math.PI); }
+  toString() {
+    const r = this.re.toFixed(5);
+    const i = Math.abs(this.im).toFixed(5);
+    return this.im >= 0 ? `${r} + ${i}j` : `${r} - ${i}j`;
+  }
+  toPolar() {
+    return `${this.abs().toFixed(4)} ∠ ${this.deg().toFixed(2)}°`;
+  }
+}
+
+function parseInputComplex(str) {
+  let s = (str || "").trim().replace(/\s+/g, '').replace(/i/g, 'j');
+  if (!s) return new Complex(0, 0);
+  if (s === 'j' || s === '+j') return new Complex(0, 1);
+  if (s === '-j') return new Complex(0, -1);
+
+  const m = s.match(/^([+-]?\d*\.?\d+(?:[eE][+-]?\d+)?)(.*)$/);
+  if (!m) {
+    if (s.endsWith('j')) return new Complex(0, parseFloat(s.slice(0, -1)));
+    return new Complex(parseFloat(s) || 0, 0);
+  }
+  const re = parseFloat(m[1]) || 0;
+  const rem = m[2];
+  if (!rem) return new Complex(re, 0);
+  if (rem === '+j') return new Complex(re, 1);
+  if (rem === '-j') return new Complex(re, -1);
+  if (rem.endsWith('j')) return new Complex(re, parseFloat(rem.slice(0, -1)));
+  return new Complex(re, 0);
+}
+
+function invertMatrix2x2(a, b, c, d) {
+  const det = a.mul(d).sub(b.mul(c));
+  if (det.abs() < 1e-12) throw new Error("Ma trận suy biến, không thể nghịch đảo!");
+  return [
+    d.div(det),
+    new Complex(0, 0).sub(b).div(det),
+    new Complex(0, 0).sub(c).div(det),
+    a.div(det)
+  ];
+}
+
+function calculateMatrix() {
+  const err = document.getElementById("err-box");
+  err.style.display = "none";
+  err.innerText = "";
+
+  try {
+    const z0Val = parseFloat(document.getElementById("z0").value);
+    if (!z0Val || z0Val <= 0) throw new Error("Trở kháng Z₀ phải là số dương lớn hơn 0!");
+
+    const mode = document.getElementById("mode").value;
+    const a11 = parseInputComplex(document.getElementById("m11").value);
+    const a12 = parseInputComplex(document.getElementById("m12").value);
+    const a21 = parseInputComplex(document.getElementById("m21").value);
+    const a22 = parseInputComplex(document.getElementById("m22").value);
+
+    let res = [];
+    let sEval = [];
+    let title = "";
+
+    if (mode === "ABCD_TO_S") {
+      const z0 = new Complex(z0Val, 0);
+      const delta = a11.add(a12.div(z0)).add(a21.mul(z0)).add(a22);
+      const detT = a11.mul(a22).sub(a12.mul(a21));
+
+      const S11 = a11.add(a12.div(z0)).sub(a21.mul(z0)).sub(a22).div(delta);
+      const S12 = new Complex(2, 0).mul(detT).div(delta);
+      const S21 = new Complex(2, 0).div(delta);
+      const S22 = new Complex(0, 0).sub(a11).add(a12.div(z0)).sub(a21.mul(z0)).add(a22).div(delta);
+
+      res = [S11, S12, S21, S22];
+      sEval = res;
+      title = "Ma trận Tán xạ [S]:";
+    } else if (mode === "S_TO_ABCD") {
+      const z0 = new Complex(z0Val, 0);
+      const denom = new Complex(2, 0).mul(a21);
+      const detS = a11.mul(a22).sub(a12.mul(a21));
+      const one = new Complex(1, 0);
+
+      const A = one.add(a11).mul(one.sub(a22)).add(a12.mul(a21)).div(denom);
+      const B = z0.mul(one.add(a11).mul(one.add(a22)).sub(a12.mul(a21))).div(denom);
+      const C = (one.div(z0)).mul(one.sub(a11).mul(one.sub(a22)).sub(a12.mul(a21))).div(denom);
+      const D = one.sub(a11).mul(one.add(a22)).add(a12.mul(a21)).div(denom);
+
+      res = [A, B, C, D];
+      sEval = [a11, a12, a21, a22];
+      title = "Ma trận Cascade [ABCD]:";
+    } else if (mode === "Y_TO_S") {
+      const z0 = new Complex(z0Val, 0);
+      const one = new Complex(1, 0);
+      const zero = new Complex(0, 0);
+
+      const yb11 = a11.mul(z0), yb12 = a12.mul(z0);
+      const yb21 = a21.mul(z0), yb22 = a22.mul(z0);
+
+      const inv = invertMatrix2x2(one.add(yb11), yb12, yb21, one.add(yb22));
+      const n11 = one.sub(yb11), n12 = zero.sub(yb12);
+      const n21 = zero.sub(yb21), n22 = one.sub(yb22);
+
+      res = [
+        n11.mul(inv[0]).add(n12.mul(inv[2])),
+        n11.mul(inv[1]).add(n12.mul(inv[3])),
+        n21.mul(inv[0]).add(n22.mul(inv[2])),
+        n21.mul(inv[1]).add(n22.mul(inv[3]))
+      ];
+      sEval = res;
+      title = "Ma trận Tán xạ [S]:";
+    } else if (mode === "S_TO_Y") {
+      const z0 = new Complex(z0Val, 0);
+      const one = new Complex(1, 0);
+      const zero = new Complex(0, 0);
+
+      const inv = invertMatrix2x2(one.add(a11), a12, a21, one.add(a22));
+      const n11 = one.sub(a11), n12 = zero.sub(a12);
+      const n21 = zero.sub(a21), n22 = one.sub(a22);
+
+      const yb11 = n11.mul(inv[0]).add(n12.mul(inv[2]));
+      const yb12 = n11.mul(inv[1]).add(n12.mul(inv[3]));
+      const yb21 = n21.mul(inv[0]).add(n22.mul(inv[2]));
+      const yb22 = n21.mul(inv[1]).add(n22.mul(inv[3]));
+
+      res = [yb11.div(z0), yb12.div(z0), yb21.div(z0), yb22.div(z0)];
+      sEval = [a11, a12, a21, a22];
+      title = "Ma trận Dẫn nạp [Y] (S):";
+    }
+
+    renderOutput(res, title, sEval);
+  } catch (ex) {
+    err.innerText = "Lỗi tính toán: " + ex.message;
+    err.style.display = "block";
+  }
+}
+
+function renderOutput(out, title, s) {
+  document.getElementById("res-header").innerText = title;
+
+  document.getElementById("r11-cart").innerText = out[0].toString();
+  document.getElementById("r12-cart").innerText = out[1].toString();
+  document.getElementById("r21-cart").innerText = out[2].toString();
+  document.getElementById("r22-cart").innerText = out[3].toString();
+
+  document.getElementById("r11-pol").innerText = out[0].toPolar();
+  document.getElementById("r12-pol").innerText = out[1].toPolar();
+  document.getElementById("r21-pol").innerText = out[2].toPolar();
+  document.getElementById("r22-pol").innerText = out[3].toPolar();
+
+  const isReciprocal = s[1].sub(s[2]).abs() < 1e-4;
+  const isSymmetric = isReciprocal && (s[0].sub(s[3]).abs() < 1e-4);
+  const p1 = s[0].abs()**2 + s[2].abs()**2;
+  const p2 = s[1].abs()**2 + s[3].abs()**2;
+  const isLossless = Math.abs(p1 - 1) < 1e-4 && Math.abs(p2 - 1) < 1e-4;
+
+  document.getElementById("prop-view").innerHTML = `
+    <b>Đánh giá tính chất mạng vi ba:</b><br>
+    • Tính tương hỗ (Reciprocal): <b>${isReciprocal ? "CÓ" : "KHÔNG"}</b><br>
+    • Tính đối xứng (Symmetrical): <b>${isSymmetric ? "CÓ" : "KHÔNG"}</b><br>
+    • Tính không tiêu tán (Lossless): <b>${isLossless ? "CÓ" : "KHÔNG"}</b>
+  `;
+
+  document.getElementById("res-container").style.display = "block";
+}
+
+function loadSampleData(type) {
+  if (type === 'lambda4') {
+    document.getElementById("mode").value = "ABCD_TO_S";
+    document.getElementById("m11").value = "0";
+    document.getElementById("m12").value = "50j";
+    document.getElementById("m21").value = "0.02j";
+    document.getElementById("m22").value = "0";
+  } else if (type === 'attenuator') {
+    document.getElementById("mode").value = "Y_TO_S";
+    document.getElementById("m11").value = "0.06024";
+    document.getElementById("m12").value = "-0.05682";
+    document.getElementById("m21").value = "-0.05682";
+    document.getElementById("m22").value = "0.06024";
+  }
+  calculateMatrix();
+}
+</script>
+
+</body>
+</html>
